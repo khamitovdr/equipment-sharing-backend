@@ -1,0 +1,38 @@
+# Up (in detached mode with rebuild) and Down (with volumes) containers 
+docker compose up -d --build
+docker compose down -v
+
+# Get logs of certain container (usable in detached mode)
+docker compose logs web
+
+# Interact directly with database 
+docker compose exec web-db psql -U postgres
+\c web_dev    # attach to db
+\dt           # get tables
+\q            # quit interactive mode
+
+# Generate schema manually without migrations
+docker compose exec web python app/db.py
+
+# Aerich setup
+docker compose exec web aerich init -t app.db.TORTOISE_ORM    # generates project.toml configuration
+docker compose exec web aerich init-db                        # generates migrations (folder with .py files)
+docker compose exec web aerich upgrade                        # update database tables with existing migrations (after restarting container)
+
+# Running tests
+docker compose exec web python -m pytest .
+
+
+######################
+Linting and Code style
+######################
+
+python -m flake8 ./project/app/ --config ./project/setup.cfg
+
+python -m black ./project/app/ --config ./project/pyproject.toml --check
+python -m black ./project/app/ --config ./project/pyproject.toml --diff --color
+python -m black ./project/app/ --config ./project/pyproject.toml
+
+python -m isort ./project --check-only
+python -m isort ./project --diff --color
+python -m isort ./project
