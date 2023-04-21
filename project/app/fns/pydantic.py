@@ -13,4 +13,4 @@ class DadataResponseSchema(BaseModel):
     # capital: int
     legal_address: str
     manager_name: str
-    # main_activity: str
+    main_activity: str

@@ -1,3 +1,4 @@
+import json
 import logging
 
 from dadata import DadataAsync
@@ -12,12 +13,15 @@ log = logging.getLogger("uvicorn")
 router = APIRouter()
 
 
+with open("app/fns/okveds.json", "r") as f:
+    okveds = json.load(f)
+
+
 @router.post("/get-data-by-code/{query}/", response_model=DadataResponseSchema)
 async def get_data_by_code(query: str, settings: Settings = Depends(get_settings)):
     async with DadataAsync(settings.dadata_token) as dadata:
         result = await dadata.find_by_id("party", query, status="ACTIVE", count=1)
         
-    print(result)
     if not result:
         organization_not_found_exception = HTTPException(
             status_code=status.HTTP_401_,
@@ -37,5 +41,6 @@ async def get_data_by_code(query: str, settings: Settings = Depends(get_settings
         legal_address=result["address"]["value"],
         manager_name=result["management"]["name"],
         # main_activity=result["okveds"][0]["name"],
+        main_activity=okveds[result["okved"]],
     )
     return response
