@@ -5,7 +5,7 @@ from dadata import DadataAsync
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.config import Settings, get_settings
-from app.fns.pydantic import DadataResponseSchema
+from app.schemas.fns import DadataResponseSchema
 
 
 log = logging.getLogger("uvicorn")
@@ -13,11 +13,11 @@ log = logging.getLogger("uvicorn")
 router = APIRouter()
 
 
-with open("app/fns/okveds.json", "r") as f:
+with open("app/data/fns/okveds.json", "r") as f: # needs refactoring
     okveds = json.load(f)
 
 
-@router.post("/get-data-by-code/{query}/", response_model=DadataResponseSchema)
+@router.post("/get-data-by-code/{query}/", response_model=DadataResponseSchema) # needs refactoring
 async def get_data_by_code(query: str, settings: Settings = Depends(get_settings)):
     async with DadataAsync(settings.dadata_token) as dadata:
         result = await dadata.find_by_id("party", query, status="ACTIVE", count=1)

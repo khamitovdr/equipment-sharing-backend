@@ -7,13 +7,15 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from app.auth.crud import get_user_by_email
-from app.auth.schemas import TokenDataSchema
+from app.crud.auth import get_user_by_email
 from app.config import Settings, get_settings
-from app.models.tortoise import UserInDBSchema
+from app.schemas.auth import TokenDataSchema
+from app.schemas.users import UserInDBSchema
+
 
 # to get a string like this run:
 # openssl rand -hex 32
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 
 
@@ -39,25 +41,25 @@ async def authenticate_user(email: str, password: str) -> UserInDBSchema or Fals
     return user
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None, settings: Settings = Depends(get_settings)) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], settings: Settings = Depends(get_settings)) -> UserInDBSchema:
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserInDBSchema:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception

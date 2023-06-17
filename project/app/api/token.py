@@ -5,8 +5,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.auth.auth import authenticate_user, create_access_token
-from app.auth.schemas import TokenSchema
+from app.services.auth import authenticate_user, create_access_token
+from app.schemas.auth import TokenSchema
+
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

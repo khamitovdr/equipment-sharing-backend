@@ -3,8 +3,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.auth.auth import get_current_active_user
-from app.models.tortoise import UserInDBSchema
+from app.services.auth import get_current_active_user
+from app.schemas.users import UserInDBSchema
+
 
 log = logging.getLogger("uvicorn")
 
@@ -23,19 +24,21 @@ async def read_own_items(current_user: Annotated[UserInDBSchema, Depends(get_cur
 
 @router.get("/mock/")
 async def mock_users():
-    from app.auth.auth import get_password_hash
-    from app.auth.crud import create_user
+    from app.services.auth import get_password_hash
+    from app.crud.auth import create_user
 
     fake_users_db = {
         "johndoe": {
             "full_name": "John Doe",
             "email": "johndoe@example.com",
+            "phone": "+79999999999",
             "hashed_password": get_password_hash("secret"),
             "disabled": False,
         },
         "alice": {
             "full_name": "Alice Wonderson",
             "email": "alice@example.com",
+            "phone": "+78888888888",
             "hashed_password": get_password_hash("secret2"),
             "disabled": True,
         },

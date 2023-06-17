@@ -1,4 +1,5 @@
-from app.models.tortoise import User, UserInDBSchema
+from app.models.users import User
+from app.schemas.users import UserInDBSchema
 
 
 async def get_user_by_email(email: str) -> UserInDBSchema | None:
