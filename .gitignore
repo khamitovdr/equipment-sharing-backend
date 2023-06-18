@@ -155,5 +155,4 @@ cython_debug/
 # user
 .vscode
 migrations/
-/ml-model/
-/postgres-data/
+test_db/

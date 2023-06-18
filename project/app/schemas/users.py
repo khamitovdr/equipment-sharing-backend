@@ -4,7 +4,6 @@ from tortoise.contrib.pydantic import pydantic_model_creator
 from app.models.users import User
 
 
-# Порядок важен! Это супер странно! Если сперва вызвать строку UserSchema,
-# то исключенные поля будут исключены и у UserInDBSchema...
-UserInDBSchema: BaseModel = pydantic_model_creator(User)
-# UserSchema = pydantic_model_creator(User, exclude=["hashed_password", "id"])    # temporary not in use
+# "name" argument is critical for correct work of pydantic_model_creator! See https://github.com/tortoise/tortoise-orm/issues/647 
+UserAuthSchema: BaseModel = pydantic_model_creator(User, name="UserAuthSchema")
+UserSchema: BaseModel = pydantic_model_creator(User, name="UserSchema", exclude=["hashed_password", "id"])

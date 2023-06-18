@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.services.auth import get_current_active_user
-from app.schemas.users import UserInDBSchema
+from app.schemas.users import UserSchema
 
 
 log = logging.getLogger("uvicorn")
@@ -12,14 +12,9 @@ log = logging.getLogger("uvicorn")
 router = APIRouter()
 
 
-@router.get("/me/", response_model=UserInDBSchema)
-async def read_users_me(current_user: Annotated[UserInDBSchema, Depends(get_current_active_user)]):
+@router.get("/me/", response_model=UserSchema)
+async def read_users_me(current_user: Annotated[UserSchema, Depends(get_current_active_user)]):
     return current_user
-
-
-@router.get("/me/items/")
-async def read_own_items(current_user: Annotated[UserInDBSchema, Depends(get_current_active_user)]):
-    return [{"item_id": "Foo", "owner": current_user.email}]
 
 
 @router.get("/mock/")

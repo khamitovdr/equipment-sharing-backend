@@ -7,10 +7,9 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from app.crud.auth import get_user_by_email
-from app.config import Settings, get_settings
+from app.crud.auth import get_user_with_password_by_email, get_user_by_email
 from app.schemas.auth import TokenDataSchema
-from app.schemas.users import UserInDBSchema
+from app.schemas.users import UserAuthSchema, UserSchema
 
 
 # to get a string like this run:
@@ -32,8 +31,8 @@ def get_password_hash(password) -> str:
     return pwd_context.hash(password)
 
 
-async def authenticate_user(email: str, password: str) -> UserInDBSchema or False:
-    user = await get_user_by_email(email)
+async def authenticate_user(email: str, password: str) -> UserAuthSchema or False:
+    user = await get_user_with_password_by_email(email)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -52,7 +51,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     return encoded_jwt
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserInDBSchema:
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserSchema:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -73,8 +72,8 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
 
 
 async def get_current_active_user(
-    current_user: Annotated[UserInDBSchema, Depends(get_current_user)]
-) -> UserInDBSchema:
+    current_user: Annotated[UserSchema, Depends(get_current_user)]
+) -> UserSchema:
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user

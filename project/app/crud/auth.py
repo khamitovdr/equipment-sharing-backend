@@ -1,11 +1,24 @@
+import logging
+
 from app.models.users import User
-from app.schemas.users import UserInDBSchema
+from app.schemas.users import UserAuthSchema, UserSchema
 
 
-async def get_user_by_email(email: str) -> UserInDBSchema | None:
-    user = await User.filter(email=email).first().values()
+log = logging.getLogger("uvicorn")
+
+
+async def get_user_with_password_by_email(email: str) -> UserAuthSchema | None:
+    user = await User.filter(email=email).first()
     if user:
-        return UserInDBSchema(**user)
+        return await UserAuthSchema.from_tortoise_orm(user)
+    return None
+
+
+async def get_user_by_email(email: str) -> UserSchema | None:
+    user = await User.filter(email=email).first()
+    if user:
+        log.warning(UserSchema.schema())
+        return await UserSchema.from_tortoise_orm(user)
     return None
 
 
