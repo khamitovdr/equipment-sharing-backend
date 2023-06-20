@@ -11,7 +11,7 @@ log = logging.getLogger("uvicorn")
 
 MODELS = [
     "app.models.users",
-    # "app.models.organizations",
+    "app.models.organizations",
 ]
 
 

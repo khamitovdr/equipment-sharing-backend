@@ -1,30 +1,24 @@
+import os
 import json
 import logging
 
 from dadata import DadataAsync
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import status, HTTPException
 
-from app.config import Settings, get_settings
 from app.schemas.fns import DadataResponseSchema
+from app.crud.organizations import create_activities
 
 
-log = logging.getLogger("uvicorn")
+DADATA_TOKEN = os.getenv("DADATA_TOKEN")
 
-router = APIRouter()
-
-
-with open("app/data/fns/okveds.json", "r") as f: # needs refactoring
-    okveds = json.load(f)
-
-
-@router.post("/get-data-by-code/{query}/", response_model=DadataResponseSchema) # needs refactoring
-async def get_data_by_code(query: str, settings: Settings = Depends(get_settings)):
-    async with DadataAsync(settings.dadata_token) as dadata:
+async def get_organization_data_by_code(query: str) -> DadataResponseSchema:
+    """Returns organization data by code from DaData API."""
+    async with DadataAsync(DADATA_TOKEN) as dadata:
         result = await dadata.find_by_id("party", query, status="ACTIVE", count=1)
         
     if not result:
         organization_not_found_exception = HTTPException(
-            status_code=status.HTTP_401_,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Organization not found",
         )
         raise organization_not_found_exception
@@ -40,7 +34,13 @@ async def get_data_by_code(query: str, settings: Settings = Depends(get_settings
         # capital=result["capital"]["value"],
         legal_address=result["address"]["value"],
         manager_name=result["management"]["name"],
-        # main_activity=result["okveds"][0]["name"],
-        main_activity=okveds[result["okved"]],
+        # main_activity=okveds[result["okved"]],
+        main_activity=result["okved"],
     )
     return response
+
+
+async def init_activities_db_table():
+    with open("app/data/fns/okveds.json", "r") as f:
+        okveds = json.load(f)
+        await create_activities(okveds)

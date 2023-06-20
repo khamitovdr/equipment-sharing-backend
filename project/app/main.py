@@ -2,7 +2,7 @@ import logging
 
 from fastapi import FastAPI
 
-from app.api import token, users, fns
+from app.api import token, users
 from app.db import init_db
 
 
@@ -13,7 +13,6 @@ def create_application() -> FastAPI:
     application = FastAPI()
     application.include_router(token.router, prefix="/token", tags=["auth token"])
     application.include_router(users.router, prefix="/users", tags=["users"])
-    application.include_router(fns.router, prefix="/fns", tags=["fns"])
 
     return application
 
@@ -30,3 +29,12 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     log.info("Shutting down...")
+
+
+from app.services.fns import init_activities_db_table
+
+
+@app.get("/init_activities_db")
+async def init_activities_db():
+    await init_activities_db_table()
+    return {"message": "OK"}
