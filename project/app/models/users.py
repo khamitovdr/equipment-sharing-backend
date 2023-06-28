@@ -8,6 +8,7 @@ class User(models.Model):
     full_name = fields.CharField(max_length=150, unique=True)
     disabled = fields.BooleanField(default=False)
     is_admin = fields.BooleanField(default=False)
+    organization = fields.ForeignKeyField('models.Organization', related_name='users', null=True)
 
     def __str__(self):
         return self.email
