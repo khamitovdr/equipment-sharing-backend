@@ -28,8 +28,8 @@ async def read_organization(inn: str):
     return organization
 
 
-@router.post("/create/", response_model=str)
+@router.post("/create/", response_model=OrganizationSchema)
 async def create_organization_handler(inn: str):
     organization_data = await get_organization_data_by_code(inn)
-    organization_inn = await create_organization(organization_data)
-    return organization_inn
+    organization = await create_organization(organization_data)
+    return organization

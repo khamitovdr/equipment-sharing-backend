@@ -13,7 +13,7 @@ async def create_activities(okveds: dict):
     await Activity.bulk_create(activities)
 
 
-async def create_organization(organization_data: DadataResponseSchema) -> str:
+async def create_organization(organization_data: DadataResponseSchema) -> Organization:
     log.info(f"Creating organization with inn {organization_data.inn} in DB...")
     activity = await Activity.get_or_none(code=organization_data.main_activity)
     organization = Organization(
@@ -28,11 +28,11 @@ async def create_organization(organization_data: DadataResponseSchema) -> str:
         main_activity=activity,
     )
     await organization.save()
-    return organization.inn
+    return organization
 
 
 async def get_organization_by_inn(inn: str) -> Organization or None:
     organization = await Organization.get_or_none(inn=inn)
-    if organization:
+    if organization is not None:
         await organization.fetch_related('main_activity')
         return organization

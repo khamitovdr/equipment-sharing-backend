@@ -10,6 +10,8 @@ from passlib.context import CryptContext
 from app.crud.auth import get_user_with_password_by_email, get_user_by_email, create_user
 from app.schemas.auth import TokenDataSchema
 from app.schemas.users import UserAuthSchema, UserSchema, UserCreateSchema
+from app.models.users import User
+from app.models.organizations import Organization
 
 
 # to get a string like this run:
@@ -79,6 +81,7 @@ async def get_current_active_user(
     return current_user
 
 
-async def create_new_user(payload: UserCreateSchema) -> int:
+async def create_new_user(payload: UserCreateSchema, organization: Organization = None) -> User:
     payload.password = get_password_hash(payload.password)
-    return await create_user(payload)
+    user = await create_user(payload, organization)
+    return user

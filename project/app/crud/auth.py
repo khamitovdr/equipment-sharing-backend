@@ -1,6 +1,7 @@
 import logging
 
 from app.models.users import User
+from app.models.organizations import Organization
 from app.schemas.users import UserAuthSchema, UserSchema, UserCreateSchema
 
 
@@ -21,12 +22,11 @@ async def get_user_by_email(email: str) -> UserSchema | None:
     return None
 
 
-async def create_user(user_schema: UserCreateSchema) -> int:
-    new_user = User(
-        email=user_schema.email,
-        phone=user_schema.phone,
-        hashed_password=user_schema.password,
-        full_name=user_schema.full_name,
-    )
+async def create_user(user_schema: UserCreateSchema, organization: Organization = None) -> User:
+    user_dict = user_schema.dict()
+    user_dict["hashed_password"] = user_dict.pop("password")
+    new_user = User(**user_dict)
+    if organization:
+        new_user.organization = organization
     await new_user.save()
-    return new_user.id
+    return new_user

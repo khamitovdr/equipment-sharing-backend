@@ -6,13 +6,25 @@ from dadata import DadataAsync
 from fastapi import status, HTTPException
 
 from app.schemas.organizations import DadataResponseSchema
-from app.crud.organizations import create_activities
+from app.crud.organizations import create_activities, get_organization_by_inn, create_organization
+from app.models.organizations import Organization
 
 
 log = logging.getLogger("uvicorn")
 
 
 DADATA_TOKEN = os.getenv("DADATA_TOKEN")
+
+
+async def get_or_create_organization_by_inn(inn: str) -> Organization:
+    """Returns organization from DB if exists, otherwise creates it."""
+    log.info(f"Getting organization by inn {inn} from DB...")
+    organization = await get_organization_by_inn(inn)
+    if organization is None:
+        log.info(f"Organization with inn {inn} not found in DB, creating it...")
+        organization_data = await get_organization_data_by_code(inn)
+        organization = await create_organization(organization_data)
+    return organization
 
 
 async def get_organization_data_by_code(query: str) -> DadataResponseSchema:
