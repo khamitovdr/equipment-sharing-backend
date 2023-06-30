@@ -32,8 +32,12 @@ async def shutdown_event():
     log.info("Shutting down...")
 
 
-@app.get("/init_activities_db")
+@app.get("/fill_db")
 async def init_activities_db():
     from app.services.organizations import init_activities_db_table
+    from app.services.equipment import init_equipment_categories_db_table
+    
     await init_activities_db_table()
+    await init_equipment_categories_db_table()
+
     return {"message": "OK"}

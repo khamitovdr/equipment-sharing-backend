@@ -10,19 +10,19 @@ class EquipmentStatus(Enum):
     ARCHIVED = "archived"
 
 
-class EquipmentCategory(Enum):
-    SPECIAL_EQUIPMENT = "Спецтехника"
-    INDUSTRIAL_EQUIPMENT = "Промышленное оборудование"
-    CONTRACT_MANUFACTURING = "Контрактное производство"
-    EXHIBITION_EQUIPMENT = "Выставочное оборудование"
-    OTHER = "Другое"
-
-
 class TimeInterval(Enum):
     DAY = "day"
     WEEK = "week"
     MONTH = "month"
     YEAR = "year"
+
+
+class EquipmentCategory(models.Model):
+    # code = fields.CharField(max_length=3)
+    name = fields.CharField(max_length=255)
+    creator = fields.ForeignKeyField("models.User", related_name="equipment_categories", null=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    verified = fields.BooleanField(default=False)
 
 
 class Equipment(models.Model):
@@ -33,11 +33,12 @@ class Equipment(models.Model):
     price = fields.FloatField()
     time_interval = fields.CharEnumField(TimeInterval, default=TimeInterval.DAY)
     # quantity = fields.IntField(default=1)
-    avatar = fields.CharField(max_length=255)
-    photo_and_video = fields.CharField(max_length=255)
-    documents = fields.CharField(max_length=255) # one collective pdf file
+    avatar = fields.CharField(max_length=255, null=True)
+    photo_and_video = fields.CharField(max_length=255, null=True)
+    documents = fields.CharField(max_length=255, null=True) # one collective pdf file
     organization = fields.ForeignKeyField("models.Organization", related_name="equipment")
-    category = fields.CharEnumField(EquipmentCategory, default=EquipmentCategory.OTHER)
+    added_by = fields.ForeignKeyField("models.User", related_name="equipment")
+    category = fields.ForeignKeyField("models.EquipmentCategory", related_name="equipment")
     status = fields.CharEnumField(EquipmentStatus, default=EquipmentStatus.HIDDEN)
     year_of_release = fields.IntField(default=1900)
     created_at = fields.DatetimeField(auto_now_add=True)

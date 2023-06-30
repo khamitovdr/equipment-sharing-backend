@@ -33,7 +33,7 @@ users = [
 ]
 
 # Init Activities table
-res = requests.get(f"{URL}init_activities_db/", headers=HEADERS)
+res = requests.get(f"{URL}fill_db/", headers=HEADERS)
 assert res.status_code == 200
 
 # Create users

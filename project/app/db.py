@@ -12,6 +12,13 @@ log = logging.getLogger("uvicorn")
 MODELS = [
     "app.models.users",
     "app.models.organizations",
+    "app.models.equipment",
+    # "app.models.orders",
+    # "app.models.reviews",
+    # "app.models.payments",
+    # "app.models.notifications",
+    # "app.models.chats",
+    # "app.models.messages",
 ]
 
 
