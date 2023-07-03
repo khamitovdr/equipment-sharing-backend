@@ -11,10 +11,10 @@ class EquipmentStatus(Enum):
 
 
 class TimeInterval(Enum):
-    DAY = "day"
-    WEEK = "week"
-    MONTH = "month"
-    YEAR = "year"
+    DAY = "дни"
+    WEEK = "недели"
+    MONTH = "месяцы"
+    YEAR = "годы"
 
 
 class EquipmentCategory(models.Model):
@@ -25,6 +25,19 @@ class EquipmentCategory(models.Model):
     verified = fields.BooleanField(default=False)
 
 
+class EquipmentMedia(models.Model):
+    equipment = fields.ForeignKeyField("models.Equipment", related_name="photo_and_video")
+    media_type = fields.CharField(max_length=255, null=True)
+    path = fields.CharField(max_length=255)
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+
+class EquipmentDocument(models.Model): # pdf
+    equipment = fields.ForeignKeyField("models.Equipment", related_name="documents")
+    path = fields.CharField(max_length=255)
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+
 class Equipment(models.Model):
     name = fields.CharField(max_length=255)
     description = fields.TextField(null=True)
@@ -33,10 +46,11 @@ class Equipment(models.Model):
     price = fields.FloatField()
     time_interval = fields.CharEnumField(TimeInterval, default=TimeInterval.DAY)
     # quantity = fields.IntField(default=1)
-    avatar = fields.CharField(max_length=255, null=True)
-    photo_and_video = fields.CharField(max_length=255, null=True)
-    documents = fields.CharField(max_length=255, null=True) # one collective pdf file
-    organization = fields.ForeignKeyField("models.Organization", related_name="equipment")
+    # avatar = fields.ForeignKeyField(
+    #     "models.EquipmentMedia", 
+    #     null=True
+    # ) # tortoise.exceptions.ConfigurationError: Can't create schema due to cyclic fk references
+    # organization = fields.ForeignKeyField("models.Organization", related_name="equipment")
     added_by = fields.ForeignKeyField("models.User", related_name="equipment")
     category = fields.ForeignKeyField("models.EquipmentCategory", related_name="equipment")
     status = fields.CharEnumField(EquipmentStatus, default=EquipmentStatus.HIDDEN)
@@ -44,5 +58,8 @@ class Equipment(models.Model):
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
-    def __str__(self):
-        return self.name
+    # def __str__(self):
+    #     return self.name
+    
+    class PydanticMeta:
+        max_recursion = 0
