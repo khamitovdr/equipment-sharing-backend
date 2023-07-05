@@ -12,7 +12,7 @@ log = logging.getLogger("uvicorn")
 router = APIRouter()
 
 
-@router.post("/create", response_model=EquipmentSchema)
+@router.post("/", response_model=EquipmentSchema)
 async def submit(payload: EquipmentCreateForm = Depends()):
 
     from app.models.users import User

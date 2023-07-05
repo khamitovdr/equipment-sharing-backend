@@ -30,7 +30,7 @@ async def read_user(user_id: int):
     return user
 
 
-@router.post("/create/", response_model=UserSchema)
+@router.post("/", response_model=UserSchema)
 async def create_new_user(user_schema: UserCreateSchema):
     user_schema.password = get_password_hash(user_schema.password)
     if user_schema.organization_inn:
