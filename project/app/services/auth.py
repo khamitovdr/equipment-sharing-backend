@@ -7,11 +7,10 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from app.crud.auth import get_user_with_password_by_email, get_user_by_email, create_user
+from app.crud.users import get_user_by_email
 from app.schemas.auth import TokenDataSchema
-from app.schemas.users import UserAuthSchema, UserSchema, UserCreateSchema
 from app.models.users import User
-from app.models.organizations import Organization
+# from app.models.organizations import Organization
 
 
 # to get a string like this run:
@@ -19,6 +18,12 @@ from app.models.organizations import Organization
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 
+
+CREDENTIALS_EXCEPTION = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Could not validate credentials",
+    headers={"WWW-Authenticate": "Bearer"},
+)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -33,9 +38,9 @@ def get_password_hash(password) -> str:
     return pwd_context.hash(password)
 
 
-async def authenticate_user(email: str, password: str) -> UserAuthSchema or False:
-    user = await get_user_with_password_by_email(email)
-    if not user:
+async def authenticate_user(email: str, password: str) -> User or bool:
+    user = await get_user_by_email(email)
+    if user is None:
         return False
     if not verify_password(password, user.hashed_password):
         return False
@@ -54,22 +59,17 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
-            raise credentials_exception
+            raise CREDENTIALS_EXCEPTION
         token_data = TokenDataSchema(email=email)
     except JWTError:
-        raise credentials_exception
+        raise CREDENTIALS_EXCEPTION
     user = await get_user_by_email(email=token_data.email)
     if user is None:
-        raise credentials_exception
+        raise CREDENTIALS_EXCEPTION
     return user
 
 
@@ -79,9 +79,3 @@ async def get_current_active_user(
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
-
-
-async def create_new_user(payload: UserCreateSchema, organization: Organization = None) -> User:
-    payload.password = get_password_hash(payload.password)
-    user = await create_user(payload, organization)
-    return user

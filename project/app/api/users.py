@@ -3,10 +3,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.services.auth import get_current_active_user, create_new_user
+from app.services.auth import get_current_active_user, get_password_hash
 from app.services.organizations import get_or_create_organization_by_inn
-from app.schemas.users import UserSchema, UserCreateSchema
+from app.services.auth import authenticate_user, CREDENTIALS_EXCEPTION
+from app.schemas.users import UserSchema, UserCreateSchema, UserUpdateSchema
 from app.models.users import User
+from app.crud.users import get_user_by_id, create_user, update_user
 
 
 log = logging.getLogger("uvicorn")
@@ -20,11 +22,39 @@ async def read_users_me(current_user: Annotated[User, Depends(get_current_active
     return current_user
 
 
-@router.post("/create/", response_model=int)
-async def create_user(user_schema: UserCreateSchema):
+@router.get("/{user_id}/", response_model=UserSchema)
+async def read_user(user_id: int):
+    user = await get_user_by_id(user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.post("/create/", response_model=UserSchema)
+async def create_new_user(user_schema: UserCreateSchema):
+    user_schema.password = get_password_hash(user_schema.password)
     if user_schema.organization_inn:
         organization = await get_or_create_organization_by_inn(user_schema.organization_inn)
-        user = await create_new_user(user_schema, organization)
     else:
-        user = await create_new_user(user_schema)
-    return user.id
+        organization = None
+    user = await create_user(user_schema, organization)
+    return user
+
+
+@router.put("/me/", response_model=UserSchema)
+async def update_current_user(user_schema: UserUpdateSchema, current_user: Annotated[User, Depends(get_current_active_user)]):
+
+    if user_schema.new_password:
+        if not await authenticate_user(current_user.email, user_schema.password):
+            raise CREDENTIALS_EXCEPTION
+        user_schema.password = get_password_hash(user_schema.new_password)
+        user_schema.new_password = None
+
+    await current_user.fetch_related("organization")
+    if user_schema.organization_inn and (current_user.organization is None or user_schema.organization_inn != current_user.organization.inn):
+        organization = await get_or_create_organization_by_inn(user_schema.organization_inn)
+    else:
+        organization = None
+
+    user = await update_user(current_user, user_schema, organization)
+    return user
