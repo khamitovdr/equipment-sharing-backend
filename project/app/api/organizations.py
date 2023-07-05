@@ -28,6 +28,8 @@ async def read_organization_me(current_user: Annotated[User, Depends(get_current
 @router.get("/{inn}/", response_model=OrganizationSchema)
 async def read_organization(inn: str):
     organization = await get_organization_by_inn(inn)
+    if organization is None:
+        raise HTTPException(status_code=404, detail="Organization not found")
     return organization
 
 
