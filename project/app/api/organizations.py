@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.services.auth import get_current_active_user
 from app.services.organizations import get_organization_data_by_code
-from app.schemas.users import UserSchema
+from app.models.users import User
 from app.schemas.organizations import OrganizationSchema
 from app.crud.organizations import create_organization, get_organization_by_inn
 
@@ -15,11 +15,14 @@ log = logging.getLogger("uvicorn")
 router = APIRouter()
 
 
-# @router.get("/me/", response_model=OrganizationSchema)
-# async def read_organization_me(current_user: Annotated[UserSchema, Depends(get_current_active_user)]):
-#     if current_user.organization is None:
-#         raise HTTPException(status_code=404, detail="Organization not found")
-#     return current_user.organization
+@router.get("/my-organization/", response_model=OrganizationSchema)
+async def read_organization_me(current_user: Annotated[User, Depends(get_current_active_user)]):
+    await current_user.fetch_related("organization")
+    if current_user.organization is None:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    organization = current_user.organization
+    await organization.fetch_related("main_activity")
+    return organization
 
 
 @router.get("/{inn}/", response_model=OrganizationSchema)

@@ -9,7 +9,7 @@ class User(models.Model):
     disabled = fields.BooleanField(default=False)
     is_admin = fields.BooleanField(default=False)
     organization = fields.ForeignKeyField('models.Organization', source_field="organization_inn", related_name='users', null=True)
-    is_verified = fields.BooleanField(default=False)
+    is_verified_organization_member = fields.BooleanField(default=False)
 
     def __str__(self):
         return self.email
