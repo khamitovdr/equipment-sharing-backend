@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Annotated
 
 from pydantic import BaseModel
 from tortoise.contrib.pydantic import pydantic_model_creator
@@ -62,5 +62,5 @@ class EquipmentCreateForm:
     category_id: int = Form(...)
     year_of_release: int = Form(1900)
 
-    documents: list[UploadFile] = File([])
-    photo_and_video: list[UploadFile] = File([])
+    documents: Optional[list[UploadFile]] = File([])
+    photo_and_video: Optional[list[UploadFile]] = File([])
