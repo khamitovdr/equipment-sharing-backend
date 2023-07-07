@@ -32,5 +32,9 @@ class UserSchema(UserBaseSchema):
         orm_mode = True
 
 
+class UserListSchema(UserSchema):
+    pass
+
+
 # "name" argument is critical for correct work of pydantic_model_creator! See https://github.com/tortoise/tortoise-orm/issues/647 
 # UserSchema: BaseModel = pydantic_model_creator(User, name="UserSchema", exclude=["hashed_password", "id"])

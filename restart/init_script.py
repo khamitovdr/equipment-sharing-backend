@@ -60,7 +60,7 @@ assert res.status_code == 200
 
 # Create users
 for user in USERS:
-    res = requests.post(f"{URL}users/create/", headers=HEADERS, json=user)
+    res = requests.post(f"{URL}users/", headers=HEADERS, json=user)
     if res.status_code != 200:
         print(res.text)
         
@@ -71,7 +71,7 @@ credentials = {
     "username": "johndoe@example.com",
     "password": "secret",
 }
-res = requests.post(f"{URL}token/", headers=FORM_DATA_HEADERS, data=credentials)
+res = requests.post(f"{URL}login/", headers=FORM_DATA_HEADERS, data=credentials)
 assert res.status_code == 200
 token = res.json()["access_token"]
 AUTH_HEADERS = {
@@ -131,5 +131,5 @@ credentials = {
     "username": "johndoe@example.com",
     "password": "new_secret",
 }
-res = requests.post(f"{URL}token/", headers=FORM_DATA_HEADERS, data=credentials)
+res = requests.post(f"{URL}login/", headers=FORM_DATA_HEADERS, data=credentials)
 assert res.status_code == 200

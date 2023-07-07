@@ -36,3 +36,7 @@ async def update_user(user: User, user_schema: UserUpdateSchema, organization: O
         user.is_verified_organization_member = False
     await user.save()
     return user
+
+
+async def get_users(skip: int = 0, limit: int = 100) -> list[User]:
+    return await User.all().offset(skip).limit(limit) #.prefetch_related("organization")

@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.services.auth import get_current_active_user, get_password_hash
 from app.services.organizations import get_or_create_organization_by_inn
 from app.services.auth import authenticate_user, CREDENTIALS_EXCEPTION
-from app.schemas.users import UserSchema, UserCreateSchema, UserUpdateSchema
+from app.schemas.users import UserSchema, UserCreateSchema, UserUpdateSchema, UserListSchema
 from app.models.users import User
-from app.crud.users import get_user_by_id, create_user, update_user
+from app.crud.users import get_user_by_id, create_user, update_user, get_users
 
 
 log = logging.getLogger("uvicorn")
@@ -58,3 +58,9 @@ async def update_current_user(user_schema: UserUpdateSchema, current_user: Annot
 
     user = await update_user(current_user, user_schema, organization)
     return user
+
+
+@router.get("/", response_model=list[UserListSchema])
+async def read_users(skip: int = 0, limit: int = 100):
+    users = await get_users(skip, limit)
+    return users
