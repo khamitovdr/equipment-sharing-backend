@@ -16,6 +16,12 @@ UPLOAD_DIR = "static/equipment/"
 log = logging.getLogger("uvicorn")
 
 
+async def create_equipment_category(name: str, verified: bool = False) -> EquipmentCategory:
+    category = EquipmentCategory(name=name, verified=verified)
+    await category.save()
+    return category
+
+
 async def create_categories(categories_dict: dict, verified: bool = False):
     categories = [EquipmentCategory(name=name, verified=verified) for _, name in categories_dict.items()]
     await EquipmentCategory.bulk_create(categories)

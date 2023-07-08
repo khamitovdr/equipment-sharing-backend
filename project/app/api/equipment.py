@@ -2,8 +2,8 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.schemas.equipment import EquipmentCreateForm, EquipmentSchema, EquipmentListSchema, EquipmentCategoryListSchema
-from app.crud.equipment import create_equipment, get_equipment_by_id, get_equipment_categories, get_equipment_list, get_equipment_list
+from app.schemas.equipment import EquipmentCreateForm, EquipmentSchema, EquipmentListSchema, EquipmentCategoryListSchema, EquipmentCategorySchema
+from app.crud.equipment import create_equipment, get_equipment_by_id, get_equipment_categories, get_equipment_list, get_equipment_list, create_equipment_category
 
 
 log = logging.getLogger("uvicorn")
@@ -42,3 +42,9 @@ async def get_equipment_list_(category_id: int = None, organization_inn: str = N
 async def get_verified_equipment_categories_(organization_inn: str = None):
     categories = await get_equipment_categories(organization_inn)
     return categories
+
+
+@router.post("/categories/", response_model=EquipmentCategorySchema)
+async def create_equipment_category_(name: str):
+    category = await create_equipment_category(name)
+    return category
