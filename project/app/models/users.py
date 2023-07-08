@@ -13,5 +13,7 @@ class User(models.Model):
     #: Affiliation to organization is verified by admin based on documents
     is_verified_organization_member = fields.BooleanField(default=False)
 
+    # equipment: fields.ReverseRelation['models.Equipment']
+
     def __str__(self):
         return self.email

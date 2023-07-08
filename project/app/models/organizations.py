@@ -1,4 +1,7 @@
 from tortoise import fields, models
+from tortoise.functions import functions
+
+from app.models.equipment import EquipmentCategory
 
 
 class Activity(models.Model):
@@ -17,3 +20,14 @@ class Organization(models.Model):
     legal_address = fields.CharField(max_length=150)
     manager_name = fields.CharField(max_length=150)
     main_activity = fields.ForeignKeyField('models.Activity', related_name='organizations')
+
+    # users: fields.ReverseRelation['models.User']
+
+    # def main_equipment_categories(self) -> list[dict]:
+    #     equipment = self.users.equipment \
+    #         .annotate(count=functions.Count('id')) \
+    #         .group_by('category_id') \
+    #         .order_by('-count') \
+    #         .values('category__name', 'count')
+        
+    #     return equipment
