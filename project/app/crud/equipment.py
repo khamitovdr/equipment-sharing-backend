@@ -6,7 +6,6 @@ from fastapi import UploadFile
 from tortoise import functions
 
 from app.models.equipment import EquipmentCategory, EquipmentMedia, EquipmentDocument, Equipment
-from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.equipment import EquipmentCreateForm
 
@@ -66,9 +65,35 @@ async def create_equipment(create_form: EquipmentCreateForm, user: User):
     return equipment
 
 
-async def get_organization_main_equipment_categories(organization: Organization) -> list[EquipmentCategory]:
+async def get_equipment_by_id(equipment_id: int) -> Equipment | None:
+    return await Equipment.get_or_none(id=equipment_id)
+
+
+async def get_equipment_list(organization_inn: str = None, category_id: int = None) -> list[Equipment]:
+    filtering_params = {}
+    if organization_inn:
+        filtering_params["added_by__organization__inn"] = organization_inn
+    if category_id:
+        filtering_params["category_id"] = category_id
+    return await Equipment.filter(**filtering_params).all()
+
+
+async def get_equipment_categories(organization_inn: str = None) -> list[EquipmentCategory]:
+    filtering_params = {}
+    if organization_inn:
+        filtering_params["equipment__added_by__organization__inn"] = organization_inn
+    else:
+        filtering_params["verified"] = True
+
+    return await EquipmentCategory.filter(**filtering_params) \
+        .annotate(equipment_count=functions.Count('equipment')) \
+        .order_by('-equipment_count') \
+        .all()
+
+
+async def get_organization_main_equipment_categories(organization_inn: str) -> list[EquipmentCategory]:
     categories = await EquipmentCategory \
-        .filter(equipment__added_by__organization=organization) \
+        .filter(equipment__added_by__organization__inn=organization_inn) \
         .annotate(equipment_count=functions.Count('equipment')) \
         .order_by('-equipment_count') \
         .limit(3) \

@@ -20,6 +20,13 @@ class EquipmentCategorySchema(BaseModel):
         orm_mode = True
 
 
+class EquipmentCategoryListSchema(EquipmentCategorySchema):
+    equipment_count: int
+
+    class Config:
+        orm_mode = True
+
+
 class EquipmentMediaSchema(BaseModel):
     path: str
     media_type: str
@@ -35,21 +42,28 @@ class EquipmentDocumentSchema(BaseModel):
         orm_mode = True
 
 
-class EquipmentSchema(BaseModel):
+class EquipmentListSchema(BaseModel):
+    id: int
     name: str
     description: Optional[str]
-    description_of_configuration: Optional[str]
     with_operator: bool
     price: float
+    category: EquipmentCategorySchema
+
+    class Config:
+        orm_mode = True
+
+
+class EquipmentSchema(EquipmentListSchema):
+    description_of_configuration: Optional[str]
     time_interval: TimeInterval
     year_of_release: int
-    category: EquipmentCategorySchema
     # documents: list[EquipmentDocumentSchema]
     # photo_and_video: list[EquipmentMediaSchema]
 
     class Config:
         orm_mode = True
-        
+
 
 @dataclass
 class EquipmentCreateForm:
