@@ -157,3 +157,4 @@ cython_debug/
 migrations/
 test_db/
 static/
+restart_and_sandbox/
