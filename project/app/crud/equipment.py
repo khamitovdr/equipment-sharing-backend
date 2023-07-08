@@ -3,8 +3,10 @@ import logging
 import hashlib
 
 from fastapi import UploadFile
+from tortoise import functions
 
 from app.models.equipment import EquipmentCategory, EquipmentMedia, EquipmentDocument, Equipment
+from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.equipment import EquipmentCreateForm
 
@@ -62,3 +64,14 @@ async def create_equipment(create_form: EquipmentCreateForm, user: User):
     documents = [await create_equipment_document(equipment, document) for document in create_form.documents]
 
     return equipment
+
+
+async def get_organization_main_equipment_categories(organization: Organization) -> list[EquipmentCategory]:
+    categories = await EquipmentCategory \
+        .filter(equipment__added_by__organization=organization) \
+        .annotate(equipment_count=functions.Count('equipment')) \
+        .order_by('-equipment_count') \
+        .limit(3) \
+        .all()
+    
+    return categories
