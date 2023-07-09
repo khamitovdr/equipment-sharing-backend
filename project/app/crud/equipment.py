@@ -16,8 +16,8 @@ UPLOAD_DIR = "static/equipment/"
 log = logging.getLogger("uvicorn")
 
 
-async def create_equipment_category(name: str, verified: bool = False) -> EquipmentCategory:
-    category = EquipmentCategory(name=name, verified=verified)
+async def create_equipment_category(name: str, user: User, verified: bool = False) -> EquipmentCategory:
+    category = EquipmentCategory(name=name, verified=verified, added_by=user)
     await category.save()
     return category
 
@@ -72,7 +72,8 @@ async def create_equipment(create_form: EquipmentCreateForm, user: User):
 
 
 async def get_equipment_by_id(equipment_id: int) -> Equipment | None:
-    return await Equipment.get_or_none(id=equipment_id)
+    equipment = await Equipment.get_or_none(id=equipment_id).prefetch_related("added_by__organization", "category")
+    return equipment
 
 
 async def get_equipment_list(organization_inn: str = None, category_id: int = None) -> list[Equipment]:
@@ -81,7 +82,7 @@ async def get_equipment_list(organization_inn: str = None, category_id: int = No
         filtering_params["added_by__organization__inn"] = organization_inn
     if category_id:
         filtering_params["category_id"] = category_id
-    return await Equipment.filter(**filtering_params).all()
+    return await Equipment.filter(**filtering_params).prefetch_related("category").all()
 
 
 async def get_equipment_categories(organization_inn: str = None) -> list[EquipmentCategory]:
