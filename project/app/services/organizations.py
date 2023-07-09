@@ -1,13 +1,16 @@
 import os
 import json
 import logging
+from typing import Annotated
 
 from dadata import DadataAsync
-from fastapi import status, HTTPException
+from fastapi import status, HTTPException, Depends
 
 from app.schemas.organizations import DadataResponseSchema
 from app.crud.organizations import create_activities, get_organization_by_inn, create_organization
 from app.models.organizations import Organization
+from app.models.users import User
+from app.services.auth import get_current_active_user
 
 
 log = logging.getLogger("uvicorn")
@@ -74,6 +77,21 @@ async def get_organization_data_by_code(query: str) -> DadataResponseSchema:
         manager_name="mock_manager_name",
         main_activity="01",
     )
+
+
+async def get_current_verified_organization(
+    current_user: Annotated[User, Depends(get_current_active_user)]
+) -> Organization:
+    """Returns current user's organization if it's verified"""
+    log.info(f"Getting current user's verified organization...")
+    if current_user.organization is None or not current_user.is_verified_organization_member:
+        log.error(f"Current user doesn't have an verified organization")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current user doesn't have an verified organization",
+        )
+    log.info(f"Current user's verified organization received successfully")
+    return await current_user.organization
 
 
 async def init_activities_db_table():

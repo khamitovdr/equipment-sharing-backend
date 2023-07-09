@@ -1,4 +1,5 @@
 import os
+import logging
 from datetime import datetime, timedelta
 from typing import Annotated
 
@@ -25,9 +26,13 @@ CREDENTIALS_EXCEPTION = HTTPException(
     headers={"WWW-Authenticate": "Bearer"},
 )
 
+
+log = logging.getLogger("uvicorn")
+
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 def verify_password(plain_password, hashed_password) -> bool:
@@ -59,9 +64,11 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
+    log.info(f"Getting current user by token {token[:10]}...")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
+        log.info(f"Current user email: {email}")
         if email is None:
             raise CREDENTIALS_EXCEPTION
         token_data = TokenDataSchema(email=email)
@@ -76,6 +83,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
 async def get_current_active_user(
     current_user: Annotated[User, Depends(get_current_user)]
 ) -> User:
+    log.info(f"Getting current active user {current_user.email}...")
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
