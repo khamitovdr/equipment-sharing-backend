@@ -10,7 +10,7 @@ from app.schemas.orders import OrderCreateSchema, OrderRenterUpdateSchema, Order
 from app.services.auth import get_current_active_user
 from app.services.organizations import get_current_verified_organization
 from app.crud.equipment import get_equipment_by_id
-from app.crud.orders import create_order, update_order_renter, update_order_owner, get_order_by_id, get_organization_orders, get_user_orders
+from app.crud.orders import create_order, update_order_renter, get_order_by_id, get_organization_orders, get_user_orders, update_order_owner
 
 
 log = logging.getLogger("uvicorn")
@@ -63,4 +63,19 @@ async def update_order_renter_(update_schema: OrderRenterUpdateSchema, current_u
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
     
     order = await update_order_renter(order, update_schema)
+    return order
+
+
+@router.put("/reply/{order_id}/", response_model=OrderSchema)
+async def update_order_owner_(
+    update_schema: OrderOwnerUpdateSchema,
+    organization: Organization = Depends(get_current_verified_organization)
+    ):
+    order = await get_order_by_id(update_schema.id)
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    if order.equipment.added_by.organization != organization:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+    
+    order = await update_order_owner(order, update_schema)
     return order

@@ -30,8 +30,8 @@ async def create_order(equipment: Equipment, requester: User, order_schema: Orde
 async def get_order_by_id(order_id: int) -> Order:
     order = await Order.get_or_none(id=order_id)
     if order is None:
-        raise ValueError("Order not found")
-    await order.fetch_related('equipment__category', 'requester')
+        return None
+    await order.fetch_related('equipment__category', 'equipment__added_by__organization', 'requester')
     return order
 
 
@@ -46,7 +46,11 @@ async def get_organization_orders(organization: Organization) -> list[Order]:
 
 
 async def update_order_owner(order: Order, order_schema: OrderOwnerUpdateSchema) -> Order:
-    raise NotImplementedError
+    if order_schema.status not in (OrderStatus.ACCEPTED, OrderStatus.REJECTED):
+        raise ValueError("Forbidden order status")
+    await order.update_from_dict(order_schema.dict(exclude_unset=True)).save()
+    log.info(f"Order updated: {order.id}")
+    return order
 
 
 async def update_order_renter(order: Order, order_schema: OrderRenterUpdateSchema) -> Order:
