@@ -22,3 +22,15 @@ class DadataResponseSchema(BaseModel):
 
 # ActivitySchema = pydantic_model_creator(Activity, name="ActivitySchema")
 OrganizationSchema = pydantic_model_creator(Organization, name="OrganizationSchema", exclude=["users"])
+
+
+class OrganizationListSchema(OrganizationSchema):
+    inn: str
+    short_name: str
+    full_name: str
+    registration_date: date
+    legal_address: str
+    manager_name: str
+
+    class Config:
+        orm_mode = True
