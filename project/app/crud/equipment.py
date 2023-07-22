@@ -7,7 +7,7 @@ from tortoise import functions
 
 from app.models.equipment import EquipmentCategory, EquipmentMedia, EquipmentDocument, Equipment
 from app.models.users import User
-from app.schemas.equipment import EquipmentCreateForm
+from app.schemas.equipment import EquipmentCreateForm, EquipmentStatus
 
 
 UPLOAD_DIR = "static/equipment/"
@@ -76,13 +76,15 @@ async def get_equipment_by_id(equipment_id: int) -> Equipment | None:
     return equipment
 
 
-async def get_equipment_list(organization_inn: str = None, category_id: int = None) -> list[Equipment]:
+async def get_equipment_list(organization_inn: str = None, category_id: int = None, status: EquipmentStatus = None) -> list[Equipment]:
     filtering_params = {}
+    if status:
+        filtering_params["status"] = status
     if organization_inn:
         filtering_params["added_by__organization__inn"] = organization_inn
     if category_id:
         filtering_params["category_id"] = category_id
-    return await Equipment.filter(**filtering_params).prefetch_related("category").all()
+    return await Equipment.filter(**filtering_params).prefetch_related("category", "added_by__organization").all()
 
 
 async def get_equipment_categories(organization_inn: str = None) -> list[EquipmentCategory]:

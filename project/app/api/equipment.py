@@ -31,7 +31,7 @@ async def create_equipment_(
 
 @router.get("/", response_model=list[EquipmentListSchema])
 async def get_equipment_list_(category_id: int = None, organization_inn: str = None):
-    equipment_list = await get_equipment_list(organization_inn, category_id)
+    equipment_list = await get_equipment_list(organization_inn, category_id, EquipmentStatus.PUBLISHED)
     return equipment_list
 
 

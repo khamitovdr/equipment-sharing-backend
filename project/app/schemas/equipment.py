@@ -2,13 +2,14 @@ from dataclasses import dataclass
 from typing import Optional, Annotated
 
 from pydantic import BaseModel
-from tortoise.contrib.pydantic import pydantic_model_creator
+# from tortoise.contrib.pydantic import pydantic_model_creator
 from fastapi import UploadFile
 from fastapi.params import File, Form
 
 
 from app.schemas import _init_models
-from app.models.equipment import TimeInterval
+from app.schemas.organizations import OrganizationListSchema
+from app.models.equipment import TimeInterval, EquipmentStatus
 # from app.models.equipment import Equipment
 
 
@@ -45,6 +46,7 @@ class EquipmentDocumentSchema(BaseModel):
 class EquipmentListSchema(BaseModel):
     id: int
     name: str
+    status: EquipmentStatus
     description: Optional[str]
     with_operator: bool
     price: float
