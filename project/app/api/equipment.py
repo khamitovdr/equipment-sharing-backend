@@ -63,7 +63,6 @@ async def get_equipment(equipment_id: int):
 async def change_equipment_status(
     equipment_id: int,
     status: EquipmentStatus,
-    current_user: User = Depends(get_current_active_user),
     organization: Organization = Depends(get_current_verified_organization),
     ):
     equipment = await get_equipment_by_id(equipment_id)
