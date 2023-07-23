@@ -31,7 +31,7 @@ async def get_order_by_id(order_id: int) -> Order:
     order = await Order.get_or_none(id=order_id)
     if order is None:
         return None
-    await order.fetch_related('equipment__category', 'equipment__added_by__organization', 'requester')
+    await order.fetch_related('equipment__category', 'equipment__organization', 'requester')
     return order
 
 
@@ -41,7 +41,7 @@ async def get_user_orders(user: User) -> list[Order]:
 
 
 async def get_organization_orders(organization: Organization) -> list[Order]:
-    organization_orders = await Order.filter(equipment__added_by__organization=organization).prefetch_related('equipment__category').all()
+    organization_orders = await Order.filter(equipment__organization=organization).prefetch_related('equipment__category').all()
     return organization_orders
 
 

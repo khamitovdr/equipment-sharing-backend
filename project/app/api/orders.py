@@ -74,7 +74,7 @@ async def update_order_owner_(
     order = await get_order_by_id(update_schema.id)
     if order is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-    if order.equipment.added_by.organization != organization:
+    if order.equipment.organization != organization:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
     
     order = await update_order_owner(order, update_schema)

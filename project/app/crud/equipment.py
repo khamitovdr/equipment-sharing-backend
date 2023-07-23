@@ -61,8 +61,11 @@ async def create_equipment_document(equipment: Equipment, document: UploadFile) 
 async def create_equipment(create_form: EquipmentCreateForm, user: User):
 
     EXCLUDE_FIELDS = ["photo_and_video", "documents"]
+
     fields = create_form.__dataclass_fields__.keys()
-    equipment = Equipment(added_by=user, **{field: create_form.__getattribute__(field) for field in fields if field not in EXCLUDE_FIELDS})
+
+    await user.fetch_related("organization")
+    equipment = Equipment(added_by=user, organization=user.organization, **{field: create_form.__getattribute__(field) for field in fields if field not in EXCLUDE_FIELDS})
     await equipment.save()
 
     media = [await create_equipment_media(equipment, media) for media in create_form.photo_and_video]
@@ -72,7 +75,7 @@ async def create_equipment(create_form: EquipmentCreateForm, user: User):
 
 
 async def get_equipment_by_id(equipment_id: int) -> Equipment | None:
-    equipment = await Equipment.get_or_none(id=equipment_id).prefetch_related("added_by__organization", "category")
+    equipment = await Equipment.get_or_none(id=equipment_id).prefetch_related("organization", "category")
     return equipment
 
 
@@ -81,16 +84,16 @@ async def get_equipment_list(organization_inn: str = None, category_id: int = No
     if status:
         filtering_params["status"] = status
     if organization_inn:
-        filtering_params["added_by__organization__inn"] = organization_inn
+        filtering_params["organization__inn"] = organization_inn
     if category_id:
         filtering_params["category_id"] = category_id
-    return await Equipment.filter(**filtering_params).prefetch_related("category", "added_by__organization").all()
+    return await Equipment.filter(**filtering_params).prefetch_related("category", "organization").all()
 
 
 async def get_equipment_categories(organization_inn: str = None) -> list[EquipmentCategory]:
     filtering_params = {}
     if organization_inn:
-        filtering_params["equipment__added_by__organization__inn"] = organization_inn
+        filtering_params["equipment__organization__inn"] = organization_inn
     else:
         filtering_params["verified"] = True
 
@@ -102,7 +105,7 @@ async def get_equipment_categories(organization_inn: str = None) -> list[Equipme
 
 async def get_organization_main_equipment_categories(organization_inn: str) -> list[EquipmentCategory]:
     categories = await EquipmentCategory \
-        .filter(equipment__added_by__organization__inn=organization_inn) \
+        .filter(equipment__organization__inn=organization_inn) \
         .annotate(equipment_count=functions.Count('equipment')) \
         .order_by('-equipment_count') \
         .limit(3) \

@@ -50,16 +50,10 @@ class Equipment(models.Model):
     #     "models.EquipmentMedia", 
     #     null=True
     # ) # tortoise.exceptions.ConfigurationError: Can't create schema due to cyclic fk references
-    # organization = fields.ForeignKeyField("models.Organization", related_name="equipment")
+    organization = fields.ForeignKeyField("models.Organization", related_name="equipment")
     added_by = fields.ForeignKeyField("models.User", related_name="equipment")
     category = fields.ForeignKeyField("models.EquipmentCategory", related_name="equipment")
     status = fields.CharEnumField(EquipmentStatus, default=EquipmentStatus.HIDDEN)
     year_of_release = fields.IntField(default=1900)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
-
-    # def __str__(self):
-    #     return self.name
-    
-    class PydanticMeta:
-        max_recursion = 0
