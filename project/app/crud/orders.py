@@ -50,7 +50,6 @@ async def get_organization_orders(organization: Organization) -> list[Order]:
 
 
 async def respond_to_order(order: Order, response: OrderStatus) -> Order:
-    # assert response.is_owner_response()
     order.status = response
     await order.save()
     log.info(f"Response to order {order.id}: {response}")
