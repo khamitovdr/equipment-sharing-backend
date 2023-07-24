@@ -42,7 +42,11 @@ async def create_order_(create_schema: OrderCreateSchema, current_user: User = D
     if equipment.status != EquipmentStatus.PUBLISHED:
         raise HTTPException(status_code=400, detail="Equipment not published")
     
-    order = await create_order(equipment, current_user, create_schema)
+    try:
+        order = await create_order(equipment, current_user, create_schema)
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
+    
     log.info(f"Order created: {type(order)}")
     return order
 
@@ -73,7 +77,7 @@ async def update_order_(
     try:
         order = await update_order(order, update_schema)
     except ValueError as err:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
     
     return order
 
@@ -90,7 +94,7 @@ async def cancel_order_(order_id: int, current_user: User = Depends(get_current_
     try:
         order = await cancel_order(order)
     except ValueError as err:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
     
     return order
 
