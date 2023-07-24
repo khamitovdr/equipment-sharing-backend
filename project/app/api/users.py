@@ -32,13 +32,16 @@ async def read_user(user_id: int):
 
 @router.post("/", response_model=UserSchema)
 async def create_new_user(user_schema: UserCreateSchema):
+
     if await get_user_by_email(user_schema.email):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User with this email already exists")
+    
     user_schema.password = get_password_hash(user_schema.password)
     if user_schema.organization_inn:
         organization = await get_or_create_organization_by_inn(user_schema.organization_inn)
     else:
         organization = None
+
     user = await create_user(user_schema, organization)
     return user
 

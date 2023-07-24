@@ -10,6 +10,7 @@ class UserBaseSchema(BaseModel):
     email: EmailStr
     phone: str
     full_name: str
+    is_owner: bool = False
 
 
 class UserCreateSchema(UserBaseSchema):
@@ -18,6 +19,7 @@ class UserCreateSchema(UserBaseSchema):
 
 
 class UserUpdateSchema(BaseModel):
+    is_owner: bool or None = None
     phone: str or None = None
     full_name: str or None = None
     password: str or None = None
