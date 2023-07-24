@@ -36,7 +36,7 @@ async def get_order_by_id(order_id: int) -> Order:
 
 
 async def get_user_orders(user: User) -> list[Order]:
-    user_orders = await Order.filter(requester=user).prefetch_related('equipment__category').all()
+    user_orders = await Order.filter(requester=user).prefetch_related('equipment__category', 'equipment__organization').all()
     return user_orders
 
 

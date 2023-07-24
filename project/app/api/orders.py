@@ -20,7 +20,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[OrderSchema])
-async def get_orders_(current_user: User = Depends(get_current_active_user)):
+async def get_outgoing_orders_(current_user: User = Depends(get_current_active_user)):
     return await get_user_orders(current_user)
 
 
