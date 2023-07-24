@@ -4,31 +4,27 @@ from pydantic import BaseModel
 
 from app.models.orders import OrderStatus
 from app.schemas.equipment import EquipmentListSchema
+from app.schemas.users import UserSchema
 
 
-class OrderCreateSchema(BaseModel):
-    equipment_id: int
+class OrderBaseSchema(BaseModel):
     start_date: date
     end_date: date
 
 
-class OrderRenterUpdateSchema(BaseModel):
-    id: int
-    status: OrderStatus = None
+class OrderCreateSchema(OrderBaseSchema):
+    equipment_id: int
+
+
+class OrderUpdateSchema(BaseModel):
     start_date: date = None
     end_date: date = None
 
 
-class OrderOwnerUpdateSchema(BaseModel):
-    id: int
-    status: OrderStatus
-
-
-class OrderSchema(BaseModel):
+class OrderSchema(OrderBaseSchema):
     id: int
     equipment: EquipmentListSchema
-    start_date: date
-    end_date: date
+    requester: UserSchema
     status: OrderStatus
     created_at: datetime
 

@@ -16,6 +16,21 @@ class OrderStatus(Enum):
     IN_PROGRESS = "in_progress"
     FINISHED = "finished"
 
+    # @classmethod
+    # def owner_responses(self):
+    #     return [
+    #         self.ACCEPTED,
+    #         self.REJECTED,
+    #     ]
+    
+    # def is_owner_response(self):
+    #     return self in self.owner_responses()
+
+
+class OrderResponseStatus(Enum):
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+
 
 class Order(models.Model):
     equipment = fields.ForeignKeyField("models.Equipment", related_name="orders")
