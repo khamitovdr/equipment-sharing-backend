@@ -90,9 +90,9 @@ async def get_current_verified_organization(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Current user doesn't have an verified organization",
         )
-    log.info(f"Current user's verified organization received successfully")
-    return await current_user.organization
-
+    organization = await current_user.organization
+    log.info(f"Current user's verified organization {organization.inn} received successfully")
+    return organization
 
 async def init_activities_db_table():
     with open("app/data/fns/okveds.json", "r") as f:
