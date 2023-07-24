@@ -44,7 +44,8 @@ async def create_equipment_media(equipment: Equipment, media: UploadFile) -> Equ
 
 async def create_equipment_document(equipment: Equipment, document: UploadFile) -> EquipmentDocument:
     data = await document.read()
-    assert document.content_type == "application/pdf"
+    if document.content_type != "application/pdf":
+        raise ValueError("Document must be in PDF format")
 
     hash = hashlib.sha1(data).hexdigest()
     ext = os.path.splitext(document.filename)[-1]
@@ -75,7 +76,7 @@ async def create_equipment(create_form: EquipmentCreateForm, user: User):
 
 
 async def get_equipment_by_id(equipment_id: int) -> Equipment | None:
-    equipment = await Equipment.get_or_none(id=equipment_id).prefetch_related("organization", "category")
+    equipment = await Equipment.get_or_none(id=equipment_id).prefetch_related("organization", "category", "added_by__organization")
     return equipment
 
 
@@ -112,3 +113,9 @@ async def get_organization_main_equipment_categories(organization_inn: str) -> l
         .all()
     
     return categories
+
+
+async def update_equipment_status(equipment: Equipment, status: EquipmentStatus) -> Equipment:
+    equipment.status = status
+    await equipment.save()
+    return equipment

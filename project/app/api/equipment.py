@@ -1,12 +1,12 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.models.equipment import EquipmentStatus
+from app.models.equipment import EquipmentStatus, EquipmentStatusUpdate
 from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.equipment import EquipmentCreateForm, EquipmentSchema, EquipmentListSchema, EquipmentCategoryListSchema, EquipmentCategorySchema
-from app.crud.equipment import create_equipment, get_equipment_by_id, get_equipment_categories, get_equipment_list, get_equipment_list, create_equipment_category
+from app.crud.equipment import create_equipment, get_equipment_by_id, get_equipment_categories, get_equipment_list, get_equipment_list, create_equipment_category, update_equipment_status
 from app.services.auth import get_current_active_user
 from app.services.organizations import get_current_verified_organization
 
@@ -23,15 +23,24 @@ async def create_equipment_(
     current_user: User = Depends(get_current_active_user),
     organization: Organization = Depends(get_current_verified_organization)
     ):
-    equipment = await create_equipment(payload, current_user)
+    try:
+        equipment = await create_equipment(payload, current_user)
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
+    
     await equipment.fetch_related("category", "documents", "photo_and_video")
-    log.info(f"Equipment created fetch_related: {list(equipment.photo_and_video)}")
     return equipment
 
 
 @router.get("/", response_model=list[EquipmentListSchema])
 async def get_equipment_list_(category_id: int = None, organization_inn: str = None):
     equipment_list = await get_equipment_list(organization_inn, category_id, EquipmentStatus.PUBLISHED)
+    return equipment_list
+
+
+@router.get("/my-organization/", response_model=list[EquipmentListSchema])
+async def get_organization_equipment_list_(organization: Organization = Depends(get_current_verified_organization)):
+    equipment_list = await get_equipment_list(organization.inn)
     return equipment_list
 
 
@@ -59,10 +68,10 @@ async def get_equipment(equipment_id: int):
     return equipment
 
 
-@router.put("/{equipment_id}/status/")
+@router.put("/{equipment_id}/status/", response_model=EquipmentSchema)
 async def change_equipment_status(
     equipment_id: int,
-    status: EquipmentStatus,
+    status: EquipmentStatusUpdate,
     organization: Organization = Depends(get_current_verified_organization),
     ):
     equipment = await get_equipment_by_id(equipment_id)
@@ -72,6 +81,7 @@ async def change_equipment_status(
         raise HTTPException(status_code=403, detail="You don't have permission to change equipment status")
     
     log.info(f"Updating equipment status: {equipment} to {status.value}")
-    equipment.status = status
-    await equipment.save()
-    return {"new_status": status.value}
+
+    status = EquipmentStatus(status.value)
+    equipment = await update_equipment_status(equipment, status)
+    return equipment
