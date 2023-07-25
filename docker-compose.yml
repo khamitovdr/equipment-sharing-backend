@@ -12,6 +12,7 @@ services:
       - ENVIRONMENT=dev
       - TESTING=0
       - DATABASE_URL=postgres://postgres:postgres@web-db:5432/web_dev
+      # - DATABASE_URL=postgres://postgres:postgres@77.240.38.191:54321/web_dev
       - DATABASE_TEST_URL=postgres://postgres:postgres@web-db:5432/web_test
       - SECRET_KEY=09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
       - DADATA_TOKEN=9e00342e6a7c5bdc1192203f0efd5fa1fb130e67
