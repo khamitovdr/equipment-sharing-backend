@@ -47,7 +47,6 @@ async def create_order_(create_schema: OrderCreateSchema, current_user: User = D
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
     
-    log.info(f"Order created: {type(order)}")
     return order
 
 

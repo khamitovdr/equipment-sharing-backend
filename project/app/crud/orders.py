@@ -51,7 +51,8 @@ async def get_organization_orders(organization: Organization) -> list[Order]:
 
 async def respond_to_order(order: Order, response: OrderStatus) -> Order:
     order.status = response
-    await order.save()
+    await order.save(update_fields=["status"])
+    await order.fetch_related('equipment__category', 'equipment__organization', 'requester')
     log.info(f"Response to order {order.id}: {response}")
     return order
 
@@ -68,7 +69,9 @@ async def update_order(order: Order, order_schema: OrderUpdateSchema) -> Order:
         ):
         raise ValueError("Start date is after end date")
     
-    await order.update_from_dict(order_schema.dict(exclude_unset=True)).save()
+    update_dict = order_schema.dict(exclude_unset=True)
+    await order.update_from_dict(update_dict).save(update_fields=update_dict.keys())
+    await order.fetch_related('equipment__category', 'equipment__organization', 'requester')
     log.info(f"Order updated: {order.id}")
     return order
 
@@ -77,6 +80,7 @@ async def cancel_order(order: Order) -> Order:
     if order.status not in (OrderStatus.CREATED, OrderStatus.ACCEPTED, OrderStatus.REJECTED):
         raise ValueError(f"Order with status \"{order.status}\" can't be canceled")
     order.status = OrderStatus.CANCELED
-    await order.save()
+    await order.save(update_fields=["status"])
+    await order.fetch_related('equipment__category', 'equipment__organization', 'requester')
     log.info(f"Order canceled: {order.id}")
     return order

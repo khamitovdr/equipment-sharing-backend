@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from app.db_signals import orders
 from app.api import token, users, organizations, equipment, orders
 from app.db import init_db
 
