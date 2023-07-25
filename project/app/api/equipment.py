@@ -23,6 +23,7 @@ async def create_equipment_(
     current_user: User = Depends(get_current_active_user),
     organization: Organization = Depends(get_current_verified_organization)
     ):
+    '''Create new equipment item for current organization'''
     try:
         equipment = await create_equipment(payload, current_user)
     except ValueError as err:
@@ -34,18 +35,21 @@ async def create_equipment_(
 
 @router.get("/", response_model=list[EquipmentListSchema])
 async def get_equipment_list_(category_id: int = None, organization_inn: str = None):
+    '''Get list of equipment to rent (all, by category or from particular organization)'''
     equipment_list = await get_equipment_list(organization_inn, category_id, EquipmentStatus.PUBLISHED)
     return equipment_list
 
 
 @router.get("/my-organization/", response_model=list[EquipmentListSchema])
 async def get_organization_equipment_list_(organization: Organization = Depends(get_current_verified_organization)):
+    '''Get list of equipment of current organization'''
     equipment_list = await get_equipment_list(organization.inn)
     return equipment_list
 
 
 @router.get("/categories/", response_model=list[EquipmentCategoryListSchema])
 async def get_equipment_categories_(organization_inn: str = None):
+    '''Get list of equipment categories (all or from particular organization)'''
     categories = await get_equipment_categories(organization_inn)
     return categories
 
@@ -56,12 +60,14 @@ async def create_equipment_category_(
     current_user: User = Depends(get_current_active_user),
     organization: Organization = Depends(get_current_verified_organization)
     ):
+    '''Create new equipment category for current organization'''
     category = await create_equipment_category(name, current_user)
     return category
 
 
 @router.get("/{equipment_id}/", response_model=EquipmentSchema)
 async def get_equipment(equipment_id: int):
+    '''Get equipment item by id'''
     equipment = await get_equipment_by_id(equipment_id)
     if not equipment:
         raise HTTPException(status_code=404, detail="Equipment not found")
@@ -74,6 +80,7 @@ async def change_equipment_status(
     status: EquipmentStatusUpdate,
     organization: Organization = Depends(get_current_verified_organization),
     ):
+    '''Change equipment availability status'''
     equipment = await get_equipment_by_id(equipment_id)
     if not equipment:
         raise HTTPException(status_code=404, detail="Equipment not found")

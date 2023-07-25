@@ -18,12 +18,14 @@ router = APIRouter()
 
 @router.get("/me/", response_model=UserSchema)
 async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):
+    '''Get current user details'''
     await current_user.fetch_related("organization")
     return current_user
 
 
 @router.get("/{user_id}/", response_model=UserSchema)
 async def read_user(user_id: int):
+    '''Get user details by id'''
     user = await get_user_by_id(user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -32,7 +34,7 @@ async def read_user(user_id: int):
 
 @router.post("/", response_model=UserSchema)
 async def create_new_user(user_schema: UserCreateSchema):
-
+    '''Create new user'''
     if await get_user_by_email(user_schema.email):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User with this email already exists")
     
@@ -48,7 +50,7 @@ async def create_new_user(user_schema: UserCreateSchema):
 
 @router.put("/me/", response_model=UserSchema)
 async def update_current_user(user_schema: UserUpdateSchema, current_user: Annotated[User, Depends(get_current_active_user)]):
-
+    '''Update current user'''
     if user_schema.new_password:
         if not await authenticate_user(current_user.email, user_schema.password):
             raise CREDENTIALS_EXCEPTION
@@ -67,5 +69,6 @@ async def update_current_user(user_schema: UserUpdateSchema, current_user: Annot
 
 @router.get("/", response_model=list[UserListSchema])
 async def read_users(skip: int = 0, limit: int = 100):
+    '''Get list of all users'''
     users = await get_users(skip, limit)
     return users

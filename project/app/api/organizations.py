@@ -17,6 +17,7 @@ router = APIRouter()
 
 @router.get("/my-organization/", response_model=OrganizationSchema)
 async def read_organization_me(current_user: Annotated[User, Depends(get_current_active_user)]):
+    '''Get current user organization'''
     await current_user.fetch_related("organization")
     if current_user.organization is None:
         raise HTTPException(status_code=404, detail="Organization not found")
@@ -27,6 +28,7 @@ async def read_organization_me(current_user: Annotated[User, Depends(get_current
 
 @router.get("/{inn}/", response_model=OrganizationSchema)
 async def read_organization(inn: str):
+    '''Get organization by INN'''
     organization = await get_organization_by_inn(inn)
     if organization is None:
         raise HTTPException(status_code=404, detail="Organization not found")
