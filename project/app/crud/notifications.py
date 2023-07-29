@@ -1,47 +1,51 @@
 import logging
-from typing import Type
 from datetime import datetime
 
+from tortoise.expressions import Q
+
 from app.models.users import User
-from app.models.organizations import Organization
-from app.models.orders import Order, OrderStatus
-from app.models.notifications import BaseNotification, UserBaseNotification, OrganizationBaseNotification, UserOrganizationNotification, UserOrderNotification, OrganizationOrderNotification, UserOrganizationNotificationType, UserOrderNotificationType, NotificationStatus, OrganizationNotificationType
+from app.models.orders import Order
+from app.models.notifications import Notification, NotificationStatus, NotificationType, IncomingOrderType, OutgoingOrderType, OrganizationVerificationType, IncomingOrderNotification, OutgoingOrderNotification, OrganizationVerificationNotification, RatingFromOwnerNotification, RatingFromRenterNotification
 
 
 log = logging.getLogger("uvicorn")
 
 
-async def create_organization_verified_notification(user: User) -> UserOrganizationNotification:
-    notification = await UserOrganizationNotification.create(
+async def create_organization_status_notification(user: User, event: OrganizationVerificationType) -> Notification:
+    content = OrganizationVerificationNotification(event=event)
+    notification = await Notification.create(
         recipient=user,
-        type=UserOrganizationNotificationType.ORGANIZATION_VERIFIED,
+        type=NotificationType.ORGANIZATION_VERIFICATION,
+        content=content.json(),
     )
     log.info(f"Notification created: {notification.id}")
     return notification
 
 
-async def create_requester_order_notification(order: Order, type: UserOrderNotificationType) -> UserOrderNotification:
-    notification = await UserOrderNotification.create(
-        recipient=order.requester,
-        order=order,
-        type=type,
+async def create_requester_order_notification(order: Order, event: OutgoingOrderType) -> Notification:
+    content = OutgoingOrderNotification(event=event, order_id=order.id)
+    notification = await Notification.create(
+        recipient=await order.requester,
+        type=NotificationType.OUTGOING_ORDER,
+        content=content.json(),
     )
     log.info(f"Notification created: {notification.id}")
     return notification
 
 
-async def create_organization_order_notification(order: Order, type: OrganizationNotificationType) -> OrganizationOrderNotification:
+async def create_organization_order_notification(order: Order, event: IncomingOrderType) -> Notification:
     await order.fetch_related('equipment__organization')
-    notification = await OrganizationOrderNotification.create(
+    content = IncomingOrderNotification(event=event, order_id=order.id)
+    notification = await Notification.create(
         organization=order.equipment.organization,
-        order=order,
-        type=type,
+        type=NotificationType.INCOMING_ORDER,
+        content=content.json(),
     )
     log.info(f"Notification created: {notification.id}")
     return notification
 
 
-async def update_notifications_status(model: Type[BaseNotification], notification_id_list: list[int], new_status: NotificationStatus) -> list[BaseNotification]:
+async def update_notifications_status(notification_id_list: list[int], new_status: NotificationStatus) -> None:
     update_fields = {
         'status': new_status,
     }
@@ -52,19 +56,26 @@ async def update_notifications_status(model: Type[BaseNotification], notificatio
         case NotificationStatus.READ:
             update_fields['read_at'] = datetime.now()
 
-    await model.filter(id__in=notification_id_list).update(**update_fields)
+    await Notification.filter(id__in=notification_id_list).update(**update_fields)
     log.info(f"Notifications updated to {new_status}: {notification_id_list}")
 
 
-async def get_user_notifications(user: User, model: Type[UserBaseNotification]) -> list[UserBaseNotification]:
-    notifications = await model.filter(recipient=user, status=NotificationStatus.CREATED).all()
+async def get_renter_notifications(user: User, unread: bool = False, offset: int = 0, limit: int = 20) -> list[Notification]:
+    if unread:
+        notifications = await Notification.filter(recipient=user, status=NotificationStatus.CREATED).order_by('-created_at').offset(offset).limit(limit).all()
+    else:
+        notifications = await Notification.filter(recipient=user).order_by('-created_at').offset(offset).limit(limit).all()
     return notifications
 
 
-async def get_organization_notifications(organization: Organization, model: Type[OrganizationBaseNotification]) -> list[OrganizationBaseNotification]:
-    notifications = await model.filter(organization=organization, status=NotificationStatus.CREATED).all()
+async def get_owner_notifications(user: User, unread: bool = False, offset: int = 0, limit: int = 20) -> list[Notification]:
+    await user.fetch_related('organization')
+    if unread:
+        notifications = await Notification.filter(Q(recipient=user) | Q(organization=user.organization), status=NotificationStatus.CREATED).order_by('-created_at').offset(offset).limit(limit).all()
+    else:
+        notifications = await Notification.filter(Q(recipient=user) | Q(organization=user.organization)).order_by('-created_at').offset(offset).limit(limit).all()
     return notifications
 
 
-async def read_notifications(model: Type[BaseNotification], notification_id_list: list[int]):
-    await update_notifications_status(model, notification_id_list, NotificationStatus.READ)
+async def read_notifications(notification_id_list: list[int]) -> None:
+    await update_notifications_status(notification_id_list, NotificationStatus.READ)

@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.db_signals import orders
-from app.api import token, users, organizations, equipment, orders
+from app.api import token, users, organizations, equipment, orders, notifications
 from app.db import init_db
 
 
@@ -18,6 +18,7 @@ def create_application() -> FastAPI:
     application.include_router(organizations.router, prefix="/organizations", tags=["organizations"])
     application.include_router(equipment.router, prefix="/equipment", tags=["equipment"])
     application.include_router(orders.router, prefix="/orders", tags=["orders"])
+    application.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
 
     application.mount("/static", StaticFiles(directory="static"), name="static")
 
