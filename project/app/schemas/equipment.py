@@ -46,6 +46,7 @@ class EquipmentListSchema(BaseModel):
     description: Optional[str]
     with_operator: bool
     price: float
+    time_interval: TimeInterval
     category: EquipmentCategorySchema
     organization: OrganizationListSchema
 
@@ -55,7 +56,6 @@ class EquipmentListSchema(BaseModel):
 
 class EquipmentSchema(EquipmentListSchema):
     description_of_configuration: Optional[str]
-    time_interval: TimeInterval
     year_of_release: int
     # documents: list[EquipmentDocumentSchema]
     # photo_and_video: list[EquipmentMediaSchema]
