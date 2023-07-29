@@ -6,7 +6,7 @@ class User(models.Model):
     is_owner = fields.BooleanField(default=False)
     hashed_password = fields.CharField(max_length=150)
     phone = fields.CharField(max_length=100)
-    full_name = fields.CharField(max_length=150, unique=True)
+    full_name = fields.CharField(max_length=150)
     #: User can be disabled (baned) by admin
     disabled = fields.BooleanField(default=False)
     is_admin = fields.BooleanField(default=False)
