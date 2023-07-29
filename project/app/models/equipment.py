@@ -4,25 +4,25 @@ from tortoise import fields, models
 
 
 class EquipmentStatus(Enum):
-    IN_RENT = "в аренде"
+    IN_RENT = "in_rent"
 
     # Owner statuses
-    PUBLISHED = "опубликовано"
-    HIDDEN = "скрыто"
-    ARCHIVED = "архив"
+    PUBLISHED = "published"
+    HIDDEN = "hidden"
+    ARCHIVED = "archived"
 
 
 class EquipmentStatusUpdate(Enum):
-    PUBLISHED = "опубликовано"
-    HIDDEN = "скрыто"
-    ARCHIVED = "архив"
+    PUBLISHED = "published"
+    HIDDEN = "hidden"
+    ARCHIVED = "archived"
 
 
 class TimeInterval(Enum):
-    DAY = "дни"
-    WEEK = "недели"
-    MONTH = "месяцы"
-    YEAR = "годы"
+    DAY = "day"
+    WEEK = "week"
+    MONTH = "month"
+    YEAR = "year"
 
 
 class EquipmentCategory(models.Model):

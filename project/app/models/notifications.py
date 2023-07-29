@@ -75,12 +75,3 @@ class RatingFromRenterNotification(BaseRatingNotification):
 
 class RatingFromOwnerNotification(BaseRatingNotification):
     pass
-
-
-notification_content_templates = {
-    NotificationType.INCOMING_ORDER: IncomingOrderNotification,
-    NotificationType.OUTGOING_ORDER: OutgoingOrderNotification,
-    NotificationType.ORGANIZATION_VERIFICATION: OrganizationVerificationNotification,
-    NotificationType.RATING_FROM_RENTER: RatingFromRenterNotification,
-    NotificationType.RATING_FROM_OWNER: RatingFromOwnerNotification,
-}
