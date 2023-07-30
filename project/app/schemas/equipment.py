@@ -4,64 +4,27 @@ from typing import Optional
 from pydantic import BaseModel
 from fastapi import UploadFile
 from fastapi.params import File, Form
+from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
-from app.schemas.organizations import OrganizationListSchema
-from app.models.equipment import TimeInterval, EquipmentStatus
+from app.models.equipment import Equipment, EquipmentCategory, TimeInterval
+from app.schemas import _init_models
 
 
-class EquipmentCategorySchema(BaseModel):
+EquipmentCategorySchema = pydantic_model_creator(EquipmentCategory, name="EquipmentCategorySchema")
+# EquipmentCategoryListSchema = pydantic_queryset_creator(EquipmentCategory)
+
+class EquipmentCategoryListSchema(BaseModel):
     id: int
     name: str
-
-    class Config:
-        orm_mode = True
-
-
-class EquipmentCategoryListSchema(EquipmentCategorySchema):
+    verified: bool
     equipment_count: int
 
     class Config:
         orm_mode = True
 
 
-class EquipmentMediaSchema(BaseModel):
-    path: str
-    media_type: str
-
-    class Config:
-        orm_mode = True
-
-
-class EquipmentDocumentSchema(BaseModel):
-    path: str
-
-    class Config:
-        orm_mode = True
-
-
-class EquipmentListSchema(BaseModel):
-    id: int
-    name: str
-    status: EquipmentStatus
-    description: Optional[str]
-    with_operator: bool
-    price: float
-    time_interval: TimeInterval
-    category: EquipmentCategorySchema
-    organization: OrganizationListSchema
-
-    class Config:
-        orm_mode = True
-
-
-class EquipmentSchema(EquipmentListSchema):
-    description_of_configuration: Optional[str]
-    year_of_release: int
-    # documents: list[EquipmentDocumentSchema]
-    # photo_and_video: list[EquipmentMediaSchema]
-
-    class Config:
-        orm_mode = True
+EquipmentSchema = pydantic_model_creator(Equipment, name="EquipmentSchema")
+EquipmentListSchema = pydantic_queryset_creator(Equipment, exclude=("added_by", "added_by_id", "documents", "description_of_configuration", "year_of_release"))
 
 
 @dataclass

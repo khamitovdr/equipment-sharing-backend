@@ -3,7 +3,7 @@ from enum import Enum
 from tortoise import fields, models
 
 
-class EquipmentStatus(Enum):
+class EquipmentStatus(str, Enum):
     IN_RENT = "in_rent"
 
     # Owner statuses
@@ -12,13 +12,13 @@ class EquipmentStatus(Enum):
     ARCHIVED = "archived"
 
 
-class EquipmentStatusUpdate(Enum):
+class EquipmentStatusUpdate(str, Enum):
     PUBLISHED = "published"
     HIDDEN = "hidden"
     ARCHIVED = "archived"
 
 
-class TimeInterval(Enum):
+class TimeInterval(str, Enum):
     DAY = "day"
     WEEK = "week"
     MONTH = "month"
@@ -32,18 +32,29 @@ class EquipmentCategory(models.Model):
     created_at = fields.DatetimeField(auto_now_add=True)
     verified = fields.BooleanField(default=False)
 
+    class PydanticMeta:
+        exclude = ["creator", "creator_id", "created_at", "equipment"]
 
-class EquipmentMedia(models.Model):
-    equipment = fields.ForeignKeyField("models.Equipment", related_name="photo_and_video")
+
+class EquipmentFile(models.Model):
+    name = fields.CharField(max_length=255, null=True)
     media_type = fields.CharField(max_length=255, null=True)
     path = fields.CharField(max_length=255)
     created_at = fields.DatetimeField(auto_now_add=True)
 
+    class Meta:
+        abstract = True
 
-class EquipmentDocument(models.Model): # pdf
+    class PydanticMeta:
+        exclude = ["equipment", "equipment_id", "created_at"]
+
+
+class EquipmentMedia(EquipmentFile):
+    equipment = fields.ForeignKeyField("models.Equipment", related_name="photo_and_video")
+
+
+class EquipmentDocument(EquipmentFile): # pdf
     equipment = fields.ForeignKeyField("models.Equipment", related_name="documents")
-    path = fields.CharField(max_length=255)
-    created_at = fields.DatetimeField(auto_now_add=True)
 
 
 class Equipment(models.Model):
@@ -65,3 +76,9 @@ class Equipment(models.Model):
     year_of_release = fields.IntField(default=1900)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
+
+    documents: fields.ReverseRelation[EquipmentDocument]
+    photo_and_video: fields.ReverseRelation[EquipmentMedia]
+
+    class PydanticMeta:
+        exclude = ["orders", "created_at", "updated_at"]

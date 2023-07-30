@@ -29,18 +29,18 @@ async def create_equipment_(
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
     
-    await equipment.fetch_related("category", "documents", "photo_and_video")
+    await equipment.fetch_related("category", "documents", "photo_and_video", "organization")
     return equipment
 
 
-@router.get("/", response_model=list[EquipmentListSchema])
+@router.get("/", response_model=EquipmentListSchema)
 async def get_equipment_list_(category_id: int = None, organization_inn: str = None):
     '''Get list of equipment to rent (all, by category or from particular organization)'''
     equipment_list = await get_equipment_list(organization_inn, category_id, EquipmentStatus.PUBLISHED)
     return equipment_list
 
 
-@router.get("/my-organization/", response_model=list[EquipmentListSchema])
+@router.get("/my-organization/", response_model=EquipmentListSchema)
 async def get_organization_equipment_list_(organization: Organization = Depends(get_current_verified_organization)):
     '''Get list of equipment of current organization'''
     equipment_list = await get_equipment_list(organization.inn)
@@ -71,6 +71,7 @@ async def get_equipment(equipment_id: int):
     equipment = await get_equipment_by_id(equipment_id)
     if not equipment:
         raise HTTPException(status_code=404, detail="Equipment not found")
+    await equipment.fetch_related("category", "documents", "photo_and_video", "organization")
     return equipment
 
 
@@ -91,4 +92,5 @@ async def change_equipment_status(
 
     status = EquipmentStatus(status.value)
     equipment = await update_equipment_status(equipment, status)
+    await equipment.fetch_related("category", "documents", "photo_and_video", "organization")
     return equipment

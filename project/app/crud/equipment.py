@@ -4,10 +4,11 @@ import hashlib
 
 from fastapi import UploadFile
 from tortoise import functions
+from tortoise.query_utils import Prefetch
 
-from app.models.equipment import EquipmentCategory, EquipmentMedia, EquipmentDocument, Equipment
+from app.models.equipment import EquipmentCategory, EquipmentMedia, EquipmentDocument, Equipment, EquipmentStatus
 from app.models.users import User
-from app.schemas.equipment import EquipmentCreateForm, EquipmentStatus
+from app.schemas.equipment import EquipmentCreateForm
 
 
 UPLOAD_DIR = "static/equipment/"
@@ -37,7 +38,7 @@ async def create_equipment_media(equipment: Equipment, media: UploadFile) -> Equ
     with open(save_path, "wb") as f:
         f.write(data)
 
-    equipment_media = EquipmentMedia(equipment=equipment, path=save_path, media_type=media.content_type)
+    equipment_media = EquipmentMedia(name=media.filename, equipment=equipment, path=save_path, media_type=media.content_type)
     await equipment_media.save()
     return equipment_media
 
@@ -54,7 +55,7 @@ async def create_equipment_document(equipment: Equipment, document: UploadFile) 
     with open(save_path, "wb") as f:
         f.write(data)
 
-    equipment_document = EquipmentDocument(equipment=equipment, path=save_path)
+    equipment_document = EquipmentDocument(name=document.filename, equipment=equipment, path=save_path, document_type=document.content_type)
     await equipment_document.save()
     return equipment_document
 
@@ -69,8 +70,13 @@ async def create_equipment(create_form: EquipmentCreateForm, user: User):
     equipment = Equipment(added_by=user, organization=user.organization, **{field: create_form.__getattribute__(field) for field in fields if field not in EXCLUDE_FIELDS})
     await equipment.save()
 
-    media = [await create_equipment_media(equipment, media) for media in create_form.photo_and_video]
-    documents = [await create_equipment_document(equipment, document) for document in create_form.documents]
+    try:
+        media = [await create_equipment_media(equipment, media) for media in create_form.photo_and_video]
+        documents = [await create_equipment_document(equipment, document) for document in create_form.documents]
+    except Exception as err:
+        log.error(f"Error while creating equipment: {err}")
+        await equipment.delete()
+        raise err
 
     return equipment
 
@@ -88,7 +94,7 @@ async def get_equipment_list(organization_inn: str = None, category_id: int = No
         filtering_params["organization__inn"] = organization_inn
     if category_id:
         filtering_params["category_id"] = category_id
-    return await Equipment.filter(**filtering_params).prefetch_related("category", "organization").all()
+    return await Equipment.filter(**filtering_params).prefetch_related("category", "organization", "photo_and_video").all()
 
 
 async def get_equipment_categories(organization_inn: str = None) -> list[EquipmentCategory]:
