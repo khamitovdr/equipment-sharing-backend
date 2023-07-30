@@ -21,6 +21,9 @@ class Organization(models.Model):
     manager_name = fields.CharField(max_length=150)
     main_activity = fields.ForeignKeyField('models.Activity', related_name='organizations')
 
+    class PydanticMeta:
+        exclude = ['users', 'equipment', 'notifications', 'main_activity']
+
     # users: fields.ReverseRelation['models.User']
 
     # def main_equipment_categories(self) -> list[dict]:

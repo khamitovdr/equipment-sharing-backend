@@ -3,7 +3,7 @@ from enum import Enum
 from tortoise import fields, models
 
 
-class OrderStatus(Enum):
+class OrderStatus(str, Enum):
     # Renter statuses
     CANCELED = "canceled"
 
@@ -17,7 +17,7 @@ class OrderStatus(Enum):
     FINISHED = "finished"
 
 
-class OrderResponseStatus(Enum):
+class OrderResponseStatus(str, Enum):
     ACCEPTED = "accepted"
     REJECTED = "rejected"
 

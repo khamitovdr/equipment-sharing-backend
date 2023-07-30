@@ -4,13 +4,13 @@ from pydantic import BaseModel
 from tortoise import fields, models
 
 
-class NotificationStatus(Enum):
+class NotificationStatus(str, Enum):
     CREATED = "created"
     DELIVERED = "delivered"
     READ = "read"
 
 
-class NotificationType(Enum):
+class NotificationType(str, Enum):
     INCOMING_ORDER = "incoming_order"
     OUTGOING_ORDER = "outgoing_order"
     ORGANIZATION_VERIFICATION = "organization_verification"
@@ -29,7 +29,7 @@ class Notification(models.Model):
     content = fields.JSONField()
 
 
-class IncomingOrderType(Enum):
+class IncomingOrderType(str, Enum):
     ORDER_CREATED = "order_created"
     ORDER_CANCELED = "order_canceled"
     ORDER_UPDATED = "order_updated"
@@ -37,14 +37,14 @@ class IncomingOrderType(Enum):
     RENT_FINISHED = "rent_finished"
 
 
-class OutgoingOrderType(Enum):
+class OutgoingOrderType(str, Enum):
     ORDER_ACCEPTED = "order_accepted"
     ORDER_REJECTED = "order_rejected"
     RENT_STARTED = "rent_started"
     RENT_FINISHED = "rent_finished"
 
 
-class OrganizationVerificationType(Enum):
+class OrganizationVerificationType(str, Enum):
     ORGANIZATION_VERIFIED = "organization_verified"
     ORGANIZATION_REJECTED = "organization_rejected"
 

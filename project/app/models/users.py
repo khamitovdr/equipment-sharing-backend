@@ -13,8 +13,12 @@ class User(models.Model):
     organization = fields.ForeignKeyField('models.Organization', source_field="organization_inn", related_name='users', null=True)
     #: Affiliation to organization is verified by admin based on documents
     is_verified_organization_member = fields.BooleanField(default=False)
+    created_at = fields.DatetimeField(auto_now_add=True)
 
     # equipment: fields.ReverseRelation['models.Equipment']
 
     def __str__(self):
         return self.email
+    
+    class PydanticMeta:
+        exclude = ['hashed_password', 'organization', 'equipment_categories', 'orders', 'equipment', 'notifications']
