@@ -28,6 +28,10 @@ class Notification(models.Model):
     organization = fields.ForeignKeyField("models.Organization", related_name="notifications", null=True)
     content = fields.JSONField()
 
+    class PydanticMeta:
+        backward_relations = False
+        exclude = ["delivered_at", "read_at"]
+
 
 class IncomingOrderType(str, Enum):
     ORDER_CREATED = "order_created"

@@ -6,7 +6,7 @@ from app.models.users import User
 from app.models.organizations import Organization
 from app.services.organizations import get_current_verified_organization
 from app.services.auth import get_current_active_user
-from app.schemas.notifications import NotificationSchema
+from app.schemas.notifications import NotificationListSchema
 from app.crud.notifications import get_renter_notifications, get_owner_notifications, read_notifications
 
 
@@ -16,7 +16,7 @@ log = logging.getLogger("uvicorn")
 router = APIRouter()
 
 
-@router.get("/renter/", response_model=list[NotificationSchema])
+@router.get("/renter/", response_model=NotificationListSchema)
 async def get_notifications_renter(
         current_user: User = Depends(get_current_active_user),
         unread: bool = False,
@@ -28,7 +28,7 @@ async def get_notifications_renter(
     return notifications
 
 
-@router.get("/owner/", response_model=list[NotificationSchema])
+@router.get("/owner/", response_model=NotificationListSchema)
 async def get_notifications_owner(
         current_user: User = Depends(get_current_active_user),
         organization: Organization = Depends(get_current_verified_organization),

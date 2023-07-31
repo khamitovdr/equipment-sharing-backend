@@ -62,19 +62,25 @@ async def update_notifications_status(notification_id_list: list[int], new_statu
 
 async def get_renter_notifications(user: User, unread: bool = False, offset: int = 0, limit: int = 20) -> list[Notification]:
     if unread:
-        notifications = await Notification.filter(recipient=user, status=NotificationStatus.CREATED).order_by('-created_at').offset(offset).limit(limit).all()
+        notifications = Notification.filter(recipient=user, status=NotificationStatus.CREATED)
     else:
-        notifications = await Notification.filter(recipient=user).order_by('-created_at').offset(offset).limit(limit).all()
-    return notifications
+        notifications = Notification.filter(recipient=user)
+    return await notifications.order_by('-created_at').offset(offset).limit(limit).all().prefetch_related(
+        "organization__main_activity",
+        "recipient",
+    )
 
 
 async def get_owner_notifications(user: User, unread: bool = False, offset: int = 0, limit: int = 20) -> list[Notification]:
     await user.fetch_related('organization')
     if unread:
-        notifications = await Notification.filter(Q(recipient=user) | Q(organization=user.organization), status=NotificationStatus.CREATED).order_by('-created_at').offset(offset).limit(limit).all()
+        notifications = Notification.filter(Q(recipient=user) | Q(organization=user.organization), status=NotificationStatus.CREATED)
     else:
-        notifications = await Notification.filter(Q(recipient=user) | Q(organization=user.organization)).order_by('-created_at').offset(offset).limit(limit).all()
-    return notifications
+        notifications = Notification.filter(Q(recipient=user) | Q(organization=user.organization))
+    return await notifications.order_by('-created_at').offset(offset).limit(limit).all().prefetch_related(
+        "organization__main_activity",
+        "recipient",
+    )
 
 
 async def read_notifications(notification_id_list: list[int]) -> None:
