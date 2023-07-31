@@ -10,14 +10,16 @@ class User(models.Model):
     #: User can be disabled (baned) by admin
     disabled = fields.BooleanField(default=False)
     is_admin = fields.BooleanField(default=False)
-    organization = fields.ForeignKeyField('models.Organization', source_field="organization_inn", related_name='users', null=True)
+    organization = fields.ForeignKeyField(
+        "models.Organization", source_field="organization_inn", related_name="users", null=True
+    )
     #: Affiliation to organization is verified by admin based on documents
     is_verified_organization_member = fields.BooleanField(default=False)
     created_at = fields.DatetimeField(auto_now_add=True)
 
     def __str__(self):
         return self.email
-    
+
     class PydanticMeta:
         backward_relations = False
-        exclude = ['hashed_password', 'is_admin', 'is_verified_organization_member', 'created_at', 'organization']
+        exclude = ["hashed_password", "is_admin", "is_verified_organization_member", "created_at", "organization"]

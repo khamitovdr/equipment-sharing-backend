@@ -4,10 +4,12 @@ from typing import Optional, Type
 from tortoise import BaseDBAsyncClient
 from tortoise.signals import post_save, pre_save
 
-from app.models.orders import Order, OrderStatus
+from app.crud.notifications import (
+    create_organization_order_notification,
+    create_requester_order_notification,
+)
 from app.models.notifications import IncomingOrderType, OutgoingOrderType
-from app.crud.notifications import create_organization_order_notification, create_requester_order_notification
-
+from app.models.orders import Order, OrderStatus
 
 log = logging.getLogger("uvicorn")
 

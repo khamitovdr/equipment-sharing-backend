@@ -1,8 +1,7 @@
 import logging
 
-from app.models.organizations import Organization, Activity
-from app.schemas.organizations import DadataResponseSchema, OrganizationSchema
-
+from app.models.organizations import Activity, Organization
+from app.schemas.organizations import DadataResponseSchema
 
 log = logging.getLogger("uvicorn")
 
@@ -34,5 +33,5 @@ async def create_organization(organization_data: DadataResponseSchema) -> Organi
 async def get_organization_by_inn(inn: str) -> Organization or None:
     organization = await Organization.get_or_none(inn=inn)
     if organization is not None:
-        await organization.fetch_related('main_activity')
+        await organization.fetch_related("main_activity")
         return organization

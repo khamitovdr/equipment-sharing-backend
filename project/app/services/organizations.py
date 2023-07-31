@@ -1,17 +1,20 @@
-import os
 import json
 import logging
+import os
 from typing import Annotated
 
 from dadata import DadataAsync
-from fastapi import status, HTTPException, Depends
+from fastapi import Depends, HTTPException, status
 
-from app.schemas.organizations import DadataResponseSchema
-from app.crud.organizations import create_activities, get_organization_by_inn, create_organization
+from app.crud.organizations import (
+    create_activities,
+    create_organization,
+    get_organization_by_inn,
+)
 from app.models.organizations import Organization
 from app.models.users import User
+from app.schemas.organizations import DadataResponseSchema
 from app.services.auth import get_current_active_user
-
 
 log = logging.getLogger("uvicorn")
 
@@ -43,7 +46,7 @@ async def get_or_create_organization_by_inn(inn: str) -> Organization:
 #             detail="Organization not found",
 #         )
 #         raise organization_not_found_exception
-    
+
 #     result = result[0]["data"]
 #     log.info(f"Organization data by code {query} from DaData API received successfully")
 #     response = DadataResponseSchema(
@@ -83,9 +86,9 @@ async def get_current_verified_organization(
     current_user: Annotated[User, Depends(get_current_active_user)]
 ) -> Organization:
     """Returns current user's organization if it's verified"""
-    log.info(f"Getting current user's verified organization...")
+    log.info("Getting current user's verified organization...")
     if current_user.organization is None or not current_user.is_verified_organization_member:
-        log.error(f"Current user doesn't have an verified organization")
+        log.error("Current user doesn't have an verified organization")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Current user doesn't have an verified organization",
@@ -93,6 +96,7 @@ async def get_current_verified_organization(
     organization = await current_user.organization
     log.info(f"Current user's verified organization {organization.inn} received successfully")
     return organization
+
 
 async def init_activities_db_table():
     with open("app/data/fns/okveds.json", "r") as f:

@@ -3,8 +3,8 @@ from datetime import date
 from pydantic import BaseModel
 from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
-from app.schemas import _init_models
 from app.models.organizations import Organization
+from app.schemas import _init_models
 
 
 class DadataResponseSchema(BaseModel):
@@ -21,4 +21,6 @@ class DadataResponseSchema(BaseModel):
 
 
 OrganizationSchema = pydantic_model_creator(Organization, name="OrganizationSchema")
-OrganizationListSchema = pydantic_queryset_creator(Organization, exclude=("main_activity", "ogrn", "kpp", "authorized_capital_k_rubles"))
+OrganizationListSchema = pydantic_queryset_creator(
+    Organization, exclude=("main_activity", "ogrn", "kpp", "authorized_capital_k_rubles")
+)

@@ -5,7 +5,12 @@ from fastapi import UploadFile
 from fastapi.params import File, Form
 from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
-from app.models.equipment import Equipment, EquipmentCategory, TimeInterval, EquipmentCategoryWithEquipmentCount
+from app.models.equipment import (
+    Equipment,
+    EquipmentCategory,
+    EquipmentCategoryWithEquipmentCount,
+    TimeInterval,
+)
 from app.schemas import _init_models
 
 
@@ -29,10 +34,11 @@ EquipmentCategoryListSchema = pydantic_queryset_creator(EquipmentCategoryWithEqu
 
 
 class EquipmentPydanticMeta:
-        exclude = [
-            "orders",
-            "notifications",
-        ]
+    exclude = [
+        "orders",
+        "notifications",
+    ]
+
 
 EquipmentSchema = pydantic_model_creator(Equipment, name="EquipmentSchema", meta_override=EquipmentPydanticMeta)
 EquipmentListSchema = pydantic_queryset_creator(Equipment)

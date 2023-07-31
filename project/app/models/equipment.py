@@ -63,8 +63,9 @@ class EquipmentMedia(EquipmentFile):
     equipment = fields.ForeignKeyField("models.Equipment", related_name="photo_and_video")
 
 
-class EquipmentDocument(EquipmentFile): # pdf
+class EquipmentDocument(EquipmentFile):  # pdf
     equipment = fields.ForeignKeyField("models.Equipment", related_name="documents")
+
 
 class Equipment(models.Model):
     name = fields.CharField(max_length=255)
@@ -75,7 +76,7 @@ class Equipment(models.Model):
     time_interval = fields.CharEnumField(TimeInterval, default=TimeInterval.DAY)
     # quantity = fields.IntField(default=1)
     # avatar = fields.ForeignKeyField(
-    #     "models.EquipmentMedia", 
+    #     "models.EquipmentMedia",
     #     null=True
     # ) # tortoise.exceptions.ConfigurationError: Can't create schema due to cyclic fk references
     organization = fields.ForeignKeyField("models.Organization", related_name="equipment")

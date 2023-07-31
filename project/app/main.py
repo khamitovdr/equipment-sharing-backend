@@ -3,10 +3,9 @@ import logging
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.db_signals import orders
-from app.api import token, users, organizations, equipment, orders, notifications
+from app.api import equipment, notifications, orders, organizations, token, users
 from app.db import init_db
-
+from app.db_signals import orders_signals
 
 log = logging.getLogger("uvicorn")
 
@@ -41,9 +40,9 @@ async def shutdown_event():
 
 @app.get("/fill_db")
 async def init_activities_db():
-    from app.services.organizations import init_activities_db_table
     from app.services.equipment import init_equipment_categories_db_table
-    
+    from app.services.organizations import init_activities_db_table
+
     await init_activities_db_table()
     await init_equipment_categories_db_table()
 

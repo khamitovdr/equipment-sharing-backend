@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Annotated
 
@@ -9,8 +9,9 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from app.crud.users import get_user_by_email
-from app.schemas.auth import TokenDataSchema
 from app.models.users import User
+from app.schemas.auth import TokenDataSchema
+
 # from app.models.organizations import Organization
 
 
@@ -80,9 +81,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
     return user
 
 
-async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)]
-) -> User:
+async def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)]) -> User:
     log.info(f"Getting current active user {current_user.email}...")
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")

@@ -10,7 +10,7 @@ class OrderStatus(str, Enum):
     # Owner statuses
     ACCEPTED = "accepted"
     REJECTED = "rejected"
-    
+
     # Common statuses
     CREATED = "created"
     IN_PROGRESS = "in_progress"

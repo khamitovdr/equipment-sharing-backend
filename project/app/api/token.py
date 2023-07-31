@@ -5,9 +5,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.services.auth import authenticate_user, create_access_token
 from app.schemas.auth import TokenSchema
-
+from app.services.auth import authenticate_user, create_access_token
 
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 
@@ -19,7 +18,7 @@ router = APIRouter()
 
 @router.post("/", response_model=TokenSchema)
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    '''Login form'''
+    """Login form"""
     user = await authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(

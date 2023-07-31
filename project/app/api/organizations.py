@@ -3,12 +3,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.services.auth import get_current_active_user
-from app.services.organizations import get_organization_data_by_code
+from app.crud.organizations import get_organization_by_inn
 from app.models.users import User
 from app.schemas.organizations import OrganizationSchema
-from app.crud.organizations import create_organization, get_organization_by_inn
-
+from app.services.auth import get_current_active_user
 
 log = logging.getLogger("uvicorn")
 
@@ -17,7 +15,7 @@ router = APIRouter()
 
 @router.get("/my-organization/", response_model=OrganizationSchema)
 async def read_organization_me(current_user: Annotated[User, Depends(get_current_active_user)]):
-    '''Get current user organization'''
+    """Get current user organization"""
     await current_user.fetch_related("organization")
     if current_user.organization is None:
         raise HTTPException(status_code=404, detail="Organization not found")
@@ -28,15 +26,8 @@ async def read_organization_me(current_user: Annotated[User, Depends(get_current
 
 @router.get("/{inn}/", response_model=OrganizationSchema)
 async def read_organization(inn: str):
-    '''Get organization by INN'''
+    """Get organization by INN"""
     organization = await get_organization_by_inn(inn)
     if organization is None:
         raise HTTPException(status_code=404, detail="Organization not found")
     return organization
-
-
-# @router.post("/", response_model=OrganizationSchema)
-# async def create_organization_handler(inn: str):
-#     organization_data = await get_organization_data_by_code(inn)
-#     organization = await create_organization(organization_data)
-#     return organization
