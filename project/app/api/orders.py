@@ -6,7 +6,7 @@ from app.models.users import User
 from app.models.orders import OrderStatus, OrderResponseStatus
 from app.models.equipment import EquipmentStatus
 from app.models.organizations import Organization
-from app.schemas.orders import OrderCreateSchema, OrderUpdateSchema, OrderSchema
+from app.schemas.orders import OrderCreateSchema, OrderUpdateSchema, OrderSchema, OrderListSchema
 from app.services.auth import get_current_active_user
 from app.services.organizations import get_current_verified_organization
 from app.crud.equipment import get_equipment_by_id
@@ -19,13 +19,13 @@ log = logging.getLogger("uvicorn")
 router = APIRouter()
 
 
-@router.get("/", response_model=list[OrderSchema])
+@router.get("/", response_model=OrderListSchema)
 async def get_outgoing_orders_(current_user: User = Depends(get_current_active_user)):
     '''Get outgoing orders for current user'''
     return await get_user_orders(current_user)
 
 
-@router.get("/requests/", response_model=list[OrderSchema])
+@router.get("/requests/", response_model=OrderListSchema)
 async def get_requests_(
     organization: Organization = Depends(get_current_verified_organization),
     ):
@@ -48,16 +48,6 @@ async def create_order_(create_schema: OrderCreateSchema, current_user: User = D
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
     
     return order
-
-
-# @router.get("/{order_id}/", response_model=OrderSchema)
-# async def get_order(order_id: int, current_user: User = Depends(get_current_active_user)):
-#     order = await get_order_by_id(order_id)
-#     if order is None:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-#     if order.requester != current_user and order.equipment.owner != current_user:
-#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
-#     return order
 
 
 @router.put("/{order_id}/", response_model=OrderSchema)

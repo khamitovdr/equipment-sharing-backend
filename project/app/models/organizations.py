@@ -8,6 +8,9 @@ class Activity(models.Model):
     code = fields.CharField(max_length=10, pk=True)
     description = fields.CharField(max_length=500)
 
+    class PydanticMeta:
+        backward_relations = False
+
 
 class Organization(models.Model):
     inn = fields.CharField(max_length=20, pk=True)
@@ -22,15 +25,4 @@ class Organization(models.Model):
     main_activity = fields.ForeignKeyField('models.Activity', related_name='organizations')
 
     class PydanticMeta:
-        exclude = ['users', 'equipment', 'notifications', 'main_activity']
-
-    # users: fields.ReverseRelation['models.User']
-
-    # def main_equipment_categories(self) -> list[dict]:
-    #     equipment = self.users.equipment \
-    #         .annotate(count=functions.Count('id')) \
-    #         .group_by('category_id') \
-    #         .order_by('-count') \
-    #         .values('category__name', 'count')
-        
-    #     return equipment
+        backward_relations = False

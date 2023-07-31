@@ -33,7 +33,16 @@ class EquipmentCategory(models.Model):
     verified = fields.BooleanField(default=False)
 
     class PydanticMeta:
-        exclude = ["creator", "creator_id", "created_at", "equipment"]
+        backward_relations = False
+        exclude = ["creator", "creator_id", "created_at", "verified"]
+
+
+# For pydantic schema generation
+class EquipmentCategoryWithEquipmentCount(EquipmentCategory):
+    equipment_count = fields.IntField()
+
+    class Meta:
+        abstract = True
 
 
 class EquipmentFile(models.Model):
@@ -46,7 +55,8 @@ class EquipmentFile(models.Model):
         abstract = True
 
     class PydanticMeta:
-        exclude = ["equipment", "equipment_id", "created_at"]
+        backward_relations = False
+        exclude = ["created_at"]
 
 
 class EquipmentMedia(EquipmentFile):
@@ -55,7 +65,6 @@ class EquipmentMedia(EquipmentFile):
 
 class EquipmentDocument(EquipmentFile): # pdf
     equipment = fields.ForeignKeyField("models.Equipment", related_name="documents")
-
 
 class Equipment(models.Model):
     name = fields.CharField(max_length=255)
@@ -77,8 +86,23 @@ class Equipment(models.Model):
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
-    documents: fields.ReverseRelation[EquipmentDocument]
-    photo_and_video: fields.ReverseRelation[EquipmentMedia]
+    documents: fields.ReverseRelation["EquipmentDocument"]
+    photo_and_video: fields.ReverseRelation["EquipmentMedia"]
+
+    class Meta:
+        ordering = ["-updated_at"]
 
     class PydanticMeta:
-        exclude = ["orders", "created_at", "updated_at"]
+        # https://github.com/tortoise/tortoise-orm/issues/1444
+        # backward_relations = False # for some reason excludes annotated relations!
+        exclude = [
+            "orders",
+            "notifications",
+            "created_at",
+            "updated_at",
+            "organization",
+            "added_by",
+            "description_of_configuration",
+            "year_of_release",
+            "documents",
+        ]

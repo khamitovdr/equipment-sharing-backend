@@ -1,30 +1,26 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from pydantic import BaseModel
 from fastapi import UploadFile
 from fastapi.params import File, Form
 from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
-from app.models.equipment import Equipment, EquipmentCategory, TimeInterval
+from app.models.equipment import Equipment, EquipmentCategory, TimeInterval, EquipmentCategoryWithEquipmentCount #, EquipmentDetail
 from app.schemas import _init_models
 
 
 EquipmentCategorySchema = pydantic_model_creator(EquipmentCategory, name="EquipmentCategorySchema")
-# EquipmentCategoryListSchema = pydantic_queryset_creator(EquipmentCategory)
-
-class EquipmentCategoryListSchema(BaseModel):
-    id: int
-    name: str
-    verified: bool
-    equipment_count: int
-
-    class Config:
-        orm_mode = True
+EquipmentCategoryListSchema = pydantic_queryset_creator(EquipmentCategoryWithEquipmentCount)
 
 
-EquipmentSchema = pydantic_model_creator(Equipment, name="EquipmentSchema")
-EquipmentListSchema = pydantic_queryset_creator(Equipment, exclude=("added_by", "added_by_id", "documents", "description_of_configuration", "year_of_release"))
+class EquipmentPydanticMeta:
+        exclude = [
+            "orders",
+            "notifications",
+        ]
+
+EquipmentSchema = pydantic_model_creator(Equipment, name="EquipmentSchema", meta_override=EquipmentPydanticMeta)
+EquipmentListSchema = pydantic_queryset_creator(Equipment)
 
 
 @dataclass

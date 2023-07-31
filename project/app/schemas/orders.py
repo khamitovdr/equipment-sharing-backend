@@ -1,10 +1,11 @@
-from datetime import date, datetime
+from datetime import date
 
 from pydantic import BaseModel
 
-from app.models.orders import OrderStatus
-from app.schemas.equipment import EquipmentListSchema
-from app.schemas.users import UserSchema
+from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
+
+from app.schemas import _init_models
+from app.models.orders import Order
 
 
 class OrderBaseSchema(BaseModel):
@@ -21,12 +22,15 @@ class OrderUpdateSchema(BaseModel):
     end_date: date = None
 
 
-class OrderSchema(OrderBaseSchema):
-    id: int
-    equipment: EquipmentListSchema
-    requester: UserSchema
-    status: OrderStatus
-    created_at: datetime
+# class OrderSchema(OrderBaseSchema):
+#     id: int
+#     equipment: EquipmentListSchema
+#     requester: UserSchema
+#     status: OrderStatus
+#     created_at: datetime
 
-    class Config:
-        orm_mode = True
+#     class Config:
+#         orm_mode = True
+
+OrderSchema = pydantic_model_creator(Order, name="OrderSchema")
+OrderListSchema = pydantic_queryset_creator(Order)

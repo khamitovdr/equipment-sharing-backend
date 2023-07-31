@@ -30,3 +30,6 @@ class Order(models.Model):
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
     status = fields.CharEnumField(OrderStatus, default=OrderStatus.CREATED)
+
+    class PydanticMeta:
+        backward_relations = False

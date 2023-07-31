@@ -82,7 +82,13 @@ async def create_equipment(create_form: EquipmentCreateForm, user: User):
 
 
 async def get_equipment_by_id(equipment_id: int) -> Equipment | None:
-    equipment = await Equipment.get_or_none(id=equipment_id).prefetch_related("organization", "category", "added_by__organization")
+    equipment = await Equipment.get_or_none(id=equipment_id).prefetch_related(
+        "organization__main_activity",
+        "added_by",
+        "category",
+        "documents", 
+        "photo_and_video"
+    )
     return equipment
 
 
@@ -94,7 +100,11 @@ async def get_equipment_list(organization_inn: str = None, category_id: int = No
         filtering_params["organization__inn"] = organization_inn
     if category_id:
         filtering_params["category_id"] = category_id
-    return await Equipment.filter(**filtering_params).prefetch_related("category", "organization", "photo_and_video").all()
+    return await Equipment.filter(**filtering_params).prefetch_related(
+        "organization__main_activity",
+        "category",
+        "photo_and_video",
+    ).all()
 
 
 async def get_equipment_categories(organization_inn: str = None) -> list[EquipmentCategory]:

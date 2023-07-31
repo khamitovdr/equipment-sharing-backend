@@ -29,7 +29,7 @@ async def create_equipment_(
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
     
-    await equipment.fetch_related("category", "documents", "photo_and_video", "organization")
+    await equipment.fetch_related("organization__main_activity", "category", "documents", "photo_and_video")
     return equipment
 
 
@@ -47,7 +47,7 @@ async def get_organization_equipment_list_(organization: Organization = Depends(
     return equipment_list
 
 
-@router.get("/categories/", response_model=list[EquipmentCategoryListSchema])
+@router.get("/categories/", response_model=EquipmentCategoryListSchema)
 async def get_equipment_categories_(organization_inn: str = None):
     '''Get list of equipment categories (all or from particular organization)'''
     categories = await get_equipment_categories(organization_inn)
@@ -71,7 +71,6 @@ async def get_equipment(equipment_id: int):
     equipment = await get_equipment_by_id(equipment_id)
     if not equipment:
         raise HTTPException(status_code=404, detail="Equipment not found")
-    await equipment.fetch_related("category", "documents", "photo_and_video", "organization")
     return equipment
 
 
@@ -85,12 +84,11 @@ async def change_equipment_status(
     equipment = await get_equipment_by_id(equipment_id)
     if not equipment:
         raise HTTPException(status_code=404, detail="Equipment not found")
-    if equipment.added_by.organization.inn != organization.inn:
+    if equipment.organization.inn != organization.inn:
         raise HTTPException(status_code=403, detail="You don't have permission to change equipment status")
     
     log.info(f"Updating equipment status: {equipment} to {status.value}")
 
     status = EquipmentStatus(status.value)
     equipment = await update_equipment_status(equipment, status)
-    await equipment.fetch_related("category", "documents", "photo_and_video", "organization")
     return equipment

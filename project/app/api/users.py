@@ -67,7 +67,7 @@ async def update_current_user(user_schema: UserUpdateSchema, current_user: Annot
     return user
 
 
-@router.get("/", response_model=list[UserListSchema])
+@router.get("/", response_model=UserListSchema)
 async def read_users(skip: int = 0, limit: int = 100):
     '''Get list of all users'''
     users = await get_users(skip, limit)
