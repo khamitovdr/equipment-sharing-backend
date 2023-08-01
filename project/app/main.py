@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api import equipment, notifications, orders, organizations, token, users
 from app.db import init_db
-from app.db_signals import orders_signals
+from app.db_signals import orders_signals  # noqa: F401
 
 log = logging.getLogger("uvicorn")
 

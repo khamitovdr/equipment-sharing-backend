@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Annotated
 
-from dadata import DadataAsync
+# from dadata import DadataAsync
 from fastapi import Depends, HTTPException, status
 
 from app.crud.organizations import (

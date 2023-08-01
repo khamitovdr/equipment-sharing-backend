@@ -5,13 +5,13 @@ from fastapi import UploadFile
 from fastapi.params import File, Form
 from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
+from app import _init_models  # noqa: F401
 from app.models.equipment import (
     Equipment,
     EquipmentCategory,
     EquipmentCategoryWithEquipmentCount,
     TimeInterval,
 )
-from app.schemas import _init_models
 
 
 @dataclass

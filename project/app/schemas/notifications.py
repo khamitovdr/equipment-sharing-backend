@@ -1,7 +1,7 @@
 from tortoise.contrib.pydantic import pydantic_queryset_creator
 
+from app import _init_models  # noqa: F401
 from app.models.notifications import Notification
-from app.schemas import _init_models
 
 # class NotificationSchema(BaseModel):
 #     id: int

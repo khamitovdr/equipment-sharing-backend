@@ -3,8 +3,8 @@ from datetime import date
 from pydantic import BaseModel
 from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
+from app import _init_models  # noqa: F401
 from app.models.orders import Order
-from app.schemas import _init_models
 
 
 class OrderCreateSchema(BaseModel):

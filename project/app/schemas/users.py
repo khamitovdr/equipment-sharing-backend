@@ -1,8 +1,8 @@
 from pydantic import BaseModel, EmailStr
 from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
+from app import _init_models  # noqa: F401
 from app.models.users import User
-from app.schemas import _init_models
 
 
 class UserCreateSchema(BaseModel):
