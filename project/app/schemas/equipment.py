@@ -1,8 +1,4 @@
-from dataclasses import dataclass
-from typing import Optional
-
-from fastapi import UploadFile
-from fastapi.params import File, Form
+from pydantic import BaseModel
 from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
 from app import _init_models  # noqa: F401
@@ -14,19 +10,26 @@ from app.models.equipment import (
 )
 
 
-@dataclass
-class EquipmentCreateForm:
-    name: str = Form(...)
-    description: Optional[str] = Form(None)
-    description_of_configuration: Optional[str] = Form(None)
-    with_operator: bool = Form(False)
-    price: float = Form(...)
-    time_interval: TimeInterval = Form(TimeInterval.DAY)
-    category_id: int = Form(...)
-    year_of_release: int = Form(1900)
+class EquipmentCreateSchema(BaseModel):
+    name: str
+    description: str = None
+    description_of_configuration: str = None
+    with_operator: bool = False
+    price: float
+    time_interval: TimeInterval = TimeInterval.DAY
+    category_id: int
+    year_of_release: int = 1900
 
-    documents: Optional[list[UploadFile]] = File([])
-    photo_and_video: Optional[list[UploadFile]] = File([])
+    documents_ids: list[int] = []
+    photo_and_video_ids: list[int] = []
+
+
+class EquipmentUpdateSchema(EquipmentCreateSchema):
+    name: str = None
+    price: float = None
+    time_interval: TimeInterval = None
+    category_id: int = None
+    year_of_release: int = None
 
 
 EquipmentCategorySchema = pydantic_model_creator(EquipmentCategory, name="EquipmentCategorySchema")

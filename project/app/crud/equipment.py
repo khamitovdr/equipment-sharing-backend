@@ -1,9 +1,7 @@
-import hashlib
 import logging
-import os
 
-from fastapi import UploadFile
 from tortoise import functions
+from tortoise.expressions import Q
 
 from app.models.equipment import (
     Equipment,
@@ -12,11 +10,9 @@ from app.models.equipment import (
     EquipmentMedia,
     EquipmentStatus,
 )
+from app.models.organizations import Organization
 from app.models.users import User
-from app.schemas.equipment import EquipmentCreateForm
-
-UPLOAD_DIR = "static/equipment/"
-
+from app.schemas.equipment import EquipmentCreateSchema, EquipmentUpdateSchema
 
 log = logging.getLogger("uvicorn")
 
@@ -32,64 +28,57 @@ async def create_categories(categories_dict: dict, verified: bool = False):
     await EquipmentCategory.bulk_create(categories)
 
 
-async def create_equipment_media(equipment: Equipment, media: UploadFile) -> EquipmentMedia:
-    data = await media.read()
+async def create_equipment(
+    equipment_schema: EquipmentCreateSchema, user: User, organization: Organization
+) -> Equipment:
+    equipment_dict = equipment_schema.dict(exclude_unset=True)
+    equipment_dict["added_by"] = user
+    equipment_dict["organization"] = organization
+    documents = equipment_dict.pop("documents_ids")
+    photo_and_video = equipment_dict.pop("photo_and_video_ids")
 
-    hash = hashlib.sha1(data).hexdigest()
-    ext = os.path.splitext(media.filename)[-1]
-    save_path = f"{UPLOAD_DIR}{hash}{ext}"
-
-    with open(save_path, "wb") as f:
-        f.write(data)
-
-    equipment_media = EquipmentMedia(
-        name=media.filename, equipment=equipment, path=save_path, media_type=media.content_type
-    )
-    await equipment_media.save()
-    return equipment_media
-
-
-async def create_equipment_document(equipment: Equipment, document: UploadFile) -> EquipmentDocument:
-    data = await document.read()
-    if document.content_type != "application/pdf":
-        raise ValueError("Document must be in PDF format")
-
-    hash = hashlib.sha1(data).hexdigest()
-    ext = os.path.splitext(document.filename)[-1]
-    save_path = f"{UPLOAD_DIR}{hash}{ext}"
-
-    with open(save_path, "wb") as f:
-        f.write(data)
-
-    equipment_document = EquipmentDocument(
-        name=document.filename, equipment=equipment, path=save_path, document_type=document.content_type
-    )
-    await equipment_document.save()
-    return equipment_document
-
-
-async def create_equipment(create_form: EquipmentCreateForm, user: User):
-    EXCLUDE_FIELDS = ["photo_and_video", "documents"]
-
-    fields = create_form.__dataclass_fields__.keys()
-
-    await user.fetch_related("organization")
-    equipment = Equipment(
-        added_by=user,
-        organization=user.organization,
-        **{field: create_form.__getattribute__(field) for field in fields if field not in EXCLUDE_FIELDS},
-    )
-    await equipment.save()
+    equipment = await Equipment.create(**equipment_dict)
 
     try:
-        [await create_equipment_media(equipment, media) for media in create_form.photo_and_video]  # media
-        [await create_equipment_document(equipment, document) for document in create_form.documents]  # documents
-    except Exception as err:
-        log.error(f"Error while creating equipment: {err}")
+        host_not_set = Q(host__isnull=True)
+        await EquipmentDocument.filter(host_not_set, id__in=documents).update(host=equipment)
+        await EquipmentMedia.filter(host_not_set, id__in=photo_and_video).update(host=equipment)
+    except Exception as e:
+        log.error(f"Error while updating equipment {equipment.id} with documents and media: {e}")
         await equipment.delete()
-        raise err
+        raise e
 
     return equipment
+
+
+async def update_equipment(equipment: Equipment, equipment_schema: EquipmentUpdateSchema) -> Equipment:
+    equipment_dict = equipment_schema.dict(exclude_unset=True)
+    documents = equipment_dict.pop("documents_ids")
+    photo_and_video = equipment_dict.pop("photo_and_video_ids")
+
+    await equipment.update_from_dict(equipment_dict)
+
+    try:
+        host_not_set = Q(host__isnull=True)
+        host_is_equipment = Q(host=equipment)
+
+        await EquipmentDocument.filter(host_not_set, id__in=documents).update(host=equipment)
+        await EquipmentDocument.filter(host_is_equipment, id__not_in=documents).delete()
+
+        await EquipmentMedia.filter(host_not_set, id__in=photo_and_video).update(host=equipment)
+        await EquipmentMedia.filter(host_is_equipment, id__not_in=photo_and_video).delete()
+
+    except Exception as e:
+        log.error(f"Error while updating equipment {equipment.id} with documents and media: {e}")
+        raise e
+
+    return equipment
+
+
+async def delete_equipment(equipment: Equipment) -> int:
+    equipment_id = equipment.id
+    await equipment.delete()
+    return equipment_id
 
 
 async def get_equipment_by_id(equipment_id: int) -> Equipment | None:

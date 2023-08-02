@@ -2,6 +2,8 @@ from enum import Enum
 
 from tortoise import fields, models
 
+from app.models.files import FileBaseModel
+
 
 class EquipmentStatus(str, Enum):
     IN_RENT = "in_rent"
@@ -28,7 +30,9 @@ class TimeInterval(str, Enum):
 class EquipmentCategory(models.Model):
     # code = fields.CharField(max_length=3)
     name = fields.CharField(max_length=255)
-    creator = fields.ForeignKeyField("models.User", related_name="equipment_categories", null=True)
+    creator = fields.ForeignKeyField(
+        "models.User", related_name="equipment_categories", on_delete=fields.SET_NULL, null=True
+    )
     created_at = fields.DatetimeField(auto_now_add=True)
     verified = fields.BooleanField(default=False)
 
@@ -45,26 +49,18 @@ class EquipmentCategoryWithEquipmentCount(EquipmentCategory):
         abstract = True
 
 
-class EquipmentFile(models.Model):
-    name = fields.CharField(max_length=255, null=True)
-    media_type = fields.CharField(max_length=255, null=True)
-    path = fields.CharField(max_length=255)
-    created_at = fields.DatetimeField(auto_now_add=True)
+class EquipmentMedia(FileBaseModel):
+    SAVE_PATH = "equipment/media/"
 
-    class Meta:
-        abstract = True
-
-    class PydanticMeta:
-        backward_relations = False
-        exclude = ["created_at"]
+    host = fields.ForeignKeyField(
+        "models.Equipment", related_name="photo_and_video", on_delete=fields.CASCADE, null=True
+    )
 
 
-class EquipmentMedia(EquipmentFile):
-    equipment = fields.ForeignKeyField("models.Equipment", related_name="photo_and_video")
+class EquipmentDocument(FileBaseModel):
+    SAVE_PATH = "equipment/documents/"
 
-
-class EquipmentDocument(EquipmentFile):  # pdf
-    equipment = fields.ForeignKeyField("models.Equipment", related_name="documents")
+    host = fields.ForeignKeyField("models.Equipment", related_name="documents", on_delete=fields.CASCADE, null=True)
 
 
 class Equipment(models.Model):
@@ -79,9 +75,9 @@ class Equipment(models.Model):
     #     "models.EquipmentMedia",
     #     null=True
     # ) # tortoise.exceptions.ConfigurationError: Can't create schema due to cyclic fk references
-    organization = fields.ForeignKeyField("models.Organization", related_name="equipment")
-    added_by = fields.ForeignKeyField("models.User", related_name="equipment")
-    category = fields.ForeignKeyField("models.EquipmentCategory", related_name="equipment")
+    organization = fields.ForeignKeyField("models.Organization", related_name="equipment", on_delete=fields.CASCADE)
+    added_by = fields.ForeignKeyField("models.User", related_name="equipment", on_delete=fields.SET_NULL, null=True)
+    category = fields.ForeignKeyField("models.EquipmentCategory", related_name="equipment", on_delete=fields.CASCADE)
     status = fields.CharEnumField(EquipmentStatus, default=EquipmentStatus.HIDDEN)
     year_of_release = fields.IntField(default=1900)
     created_at = fields.DatetimeField(auto_now_add=True)

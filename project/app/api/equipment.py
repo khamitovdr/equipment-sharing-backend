@@ -1,24 +1,33 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 
 from app.crud.equipment import (
     create_equipment,
     create_equipment_category,
+    delete_equipment,
     get_equipment_by_id,
     get_equipment_categories,
     get_equipment_list,
+    update_equipment,
     update_equipment_status,
 )
-from app.models.equipment import EquipmentStatus, EquipmentStatusUpdate
+from app.crud.files import create_file, delete_file
+from app.models.equipment import (
+    EquipmentDocument,
+    EquipmentMedia,
+    EquipmentStatus,
+    EquipmentStatusUpdate,
+)
 from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.equipment import (
     EquipmentCategoryListSchema,
     EquipmentCategorySchema,
-    EquipmentCreateForm,
+    EquipmentCreateSchema,
     EquipmentListSchema,
     EquipmentSchema,
+    EquipmentUpdateSchema,
 )
 from app.services.auth import get_current_active_user
 from app.services.organizations import get_current_verified_organization
@@ -31,18 +40,92 @@ router = APIRouter()
 
 @router.post("/", response_model=EquipmentSchema)
 async def create_equipment_(
-    payload: EquipmentCreateForm = Depends(),
+    create_schema: EquipmentCreateSchema,
     current_user: User = Depends(get_current_active_user),
     organization: Organization = Depends(get_current_verified_organization),
 ):
     """Create new equipment item for current organization"""
     try:
-        equipment = await create_equipment(payload, current_user)
+        equipment = await create_equipment(create_schema, current_user, organization)
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
 
     await equipment.fetch_related("organization__main_activity", "category", "documents", "photo_and_video")
     return equipment
+
+
+@router.put("/{equipment_id}/", response_model=EquipmentSchema)
+async def update_equipment_(
+    equipment_id: int,
+    update_schema: EquipmentUpdateSchema,
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Update equipment item"""
+    equipment = await get_equipment_by_id(equipment_id)
+    if not equipment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Equipment not found")
+    if equipment.organization != organization:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission to update equipment"
+        )
+
+    equipment = await update_equipment(equipment, update_schema)
+    return equipment
+
+
+@router.delete("/{equipment_id}/")
+async def delete_equipment_(
+    equipment_id: int,
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Delete equipment item"""
+    equipment = await get_equipment_by_id(equipment_id)
+    if not equipment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Equipment not found")
+    if equipment.organization != organization:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission to delete equipment"
+        )
+
+    await delete_equipment(equipment)
+
+
+@router.post("/document/", response_model=int)
+async def upload_equipment_document(
+    document: UploadFile,
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Upload equipment document"""
+    file_id = await create_file(document, EquipmentDocument)
+    return file_id
+
+
+@router.delete("/document/{document_id}/")
+async def delete_equipment_document(
+    document_id: int,
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Delete equipment document"""
+    await delete_file(document_id, EquipmentDocument)
+
+
+@router.post("/media/", response_model=int)
+async def upload_equipment_media(
+    media: UploadFile,
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Upload equipment media"""
+    file_id = await create_file(media, EquipmentMedia)
+    return file_id
+
+
+@router.delete("/media/{media_id}/")
+async def delete_equipment_media(
+    media_id: int,
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Delete equipment media"""
+    await delete_file(media_id, EquipmentMedia)
 
 
 @router.get("/", response_model=EquipmentListSchema)
