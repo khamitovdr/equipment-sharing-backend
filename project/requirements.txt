@@ -8,5 +8,6 @@ passlib[bcrypt]>=1.7.4,<1.8
 pydantic[email]>=1.10.8,<1.11
 python-jose[cryptography]>=3.3.0,<3.4
 python-multipart>=0.0.6,<0.1
+rocketry>=2.5.1,<2.6
 tortoise-orm>=0.19.2,<0.20
 uvicorn[standard]>=0.20.0,<0.21

@@ -40,7 +40,7 @@ async def create_equipment(
     equipment = await Equipment.create(**equipment_dict)
 
     try:
-        host_not_set = Q(host__isnull=True)
+        host_not_set = Q(host_id__isnull=True)
         await EquipmentDocument.filter(host_not_set, id__in=documents).update(host=equipment)
         await EquipmentMedia.filter(host_not_set, id__in=photo_and_video).update(host=equipment)
     except Exception as e:
@@ -59,7 +59,7 @@ async def update_equipment(equipment: Equipment, equipment_schema: EquipmentUpda
     await equipment.update_from_dict(equipment_dict)
 
     try:
-        host_not_set = Q(host__isnull=True)
+        host_not_set = Q(host_id__isnull=True)
         host_is_equipment = Q(host=equipment)
 
         await EquipmentDocument.filter(host_not_set, id__in=documents).update(host=equipment)
@@ -72,6 +72,7 @@ async def update_equipment(equipment: Equipment, equipment_schema: EquipmentUpda
         log.error(f"Error while updating equipment {equipment.id} with documents and media: {e}")
         raise e
 
+    await equipment.refresh_from_db()
     return equipment
 
 

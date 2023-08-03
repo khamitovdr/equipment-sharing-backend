@@ -1,12 +1,20 @@
+import asyncio
 import logging
+import os
+import sys
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
 
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(parent_dir)
+
 from app.api import equipment, notifications, orders, organizations, token, users
 from app.db import init_db
 from app.db_signals import files_signals, orders_signals  # noqa: F401
+from app.scheduler import app as app_rocketry
 
 log = logging.getLogger("uvicorn")
 
@@ -60,3 +68,34 @@ async def init_activities_db():
     await init_equipment_categories_db_table()
 
     return {"message": "OK"}
+
+
+class Server(uvicorn.Server):
+    """Customized uvicorn.Server
+
+    Uvicorn server overrides signals and we need to include
+    Rocketry to the signals."""
+
+    def handle_exit(self, sig: int, frame) -> None:
+        app_rocketry.session.shut_down()
+        return super().handle_exit(sig, frame)
+
+
+async def main():
+    "Run scheduler and the API"
+
+    # https://www.uvicorn.org/settings/
+    server = Server(
+        config=uvicorn.Config(
+            app, workers=1, loop="asyncio", host="0.0.0.0", port=8000, reload=True, reload_dirs=["app"]
+        )
+    )
+
+    api = asyncio.create_task(server.serve())
+    sched = asyncio.create_task(app_rocketry.serve())
+
+    await asyncio.wait([sched, api])
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
