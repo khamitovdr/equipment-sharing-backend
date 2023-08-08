@@ -32,17 +32,23 @@ router = APIRouter()
 
 
 @router.get("/", response_model=OrderListSchema)
-async def get_outgoing_orders_(current_user: User = Depends(get_current_active_user)):
+async def get_outgoing_orders_(
+    current_user: User = Depends(get_current_active_user),
+    offset: int = 0,
+    limit: int = 40,
+):
     """Get outgoing orders for current user"""
-    return await get_user_orders(current_user)
+    return await get_user_orders(current_user, offset=offset, limit=limit)
 
 
 @router.get("/requests/", response_model=OrderListSchema)
 async def get_requests_(
     organization: Organization = Depends(get_current_verified_organization),
+    offset: int = 0,
+    limit: int = 40,
 ):
     """Get incoming orders for current organization"""
-    return await get_organization_orders(organization)
+    return await get_organization_orders(organization, offset=offset, limit=limit)
 
 
 @router.post("/", response_model=OrderSchema)

@@ -24,7 +24,7 @@ async def get_notifications_renter(
     current_user: User = Depends(get_current_active_user),
     unread: bool = False,
     offset: int = 0,
-    limit: int = 20,
+    limit: int = 40,
 ):
     """Get notifications for current user"""
     notifications = await get_renter_notifications(current_user, unread, offset, limit)
@@ -37,7 +37,7 @@ async def get_notifications_owner(
     organization: Organization = Depends(get_current_verified_organization),
     unread: bool = False,
     offset: int = 0,
-    limit: int = 20,
+    limit: int = 40,
 ):
     """Get notifications for current user"""
     notifications = await get_owner_notifications(current_user, unread, offset, limit)

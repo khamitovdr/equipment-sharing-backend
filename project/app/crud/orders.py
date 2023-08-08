@@ -42,29 +42,35 @@ async def get_order_by_id(order_id: int) -> Order:
     return order
 
 
-async def get_user_orders(user: User) -> list[Order]:
+async def get_user_orders(user: User, offset: int = 0, limit: int = 40) -> list[Order]:
     user_orders = (
         await Order.filter(requester=user)
+        .order_by("-created_at")
+        .offset(offset)
+        .limit(limit)
+        .all()
         .prefetch_related(
             "equipment__category",
             "equipment__photo_and_video",
             "requester",
         )
-        .all()
     )
     return user_orders
 
 
-async def get_organization_orders(organization: Organization) -> list[Order]:
+async def get_organization_orders(organization: Organization, offset: int = 0, limit: int = 40) -> list[Order]:
     organization_orders = (
         await Order.filter(equipment__organization=organization)
         .exclude(status=OrderStatus.CANCELED)
+        .order_by("-created_at")
+        .offset(offset)
+        .limit(limit)
+        .all()
         .prefetch_related(
             "equipment__category",
             "equipment__photo_and_video",
             "requester",
         )
-        .all()
     )
     return organization_orders
 

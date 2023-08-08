@@ -90,7 +90,11 @@ async def get_equipment_by_id(equipment_id: int) -> Equipment | None:
 
 
 async def get_equipment_list(
-    organization_inn: str = None, category_id: int = None, status: EquipmentStatus = None
+    organization_inn: str = None,
+    category_id: int = None,
+    status: EquipmentStatus = None,
+    offset: int = 0,
+    limit: int = 40,
 ) -> list[Equipment]:
     filtering_params = {}
     if status:
@@ -106,6 +110,9 @@ async def get_equipment_list(
             "category",
             "photo_and_video",
         )
+        .order_by("-updated_at")
+        .offset(offset)
+        .limit(limit)
         .all()
     )
 

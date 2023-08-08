@@ -130,16 +130,25 @@ async def delete_equipment_media(
 
 
 @router.get("/", response_model=EquipmentListSchema)
-async def get_equipment_list_(category_id: int = None, organization_inn: str = None):
+async def get_equipment_list_(
+    category_id: int = None, 
+    organization_inn: str = None,
+    offset: int = 0,
+    limit: int = 40,
+):
     """Get list of equipment to rent (all, by category or from particular organization)"""
-    equipment_list = await get_equipment_list(organization_inn, category_id, EquipmentStatus.PUBLISHED)
+    equipment_list = await get_equipment_list(organization_inn, category_id, EquipmentStatus.PUBLISHED, offset=offset, limit=limit)
     return equipment_list
 
 
 @router.get("/my-organization/", response_model=EquipmentListSchema)
-async def get_organization_equipment_list_(organization: Organization = Depends(get_current_verified_organization)):
+async def get_organization_equipment_list_(
+    organization: Organization = Depends(get_current_verified_organization),
+    offset: int = 0,
+    limit: int = 40,
+):
     """Get list of equipment of current organization"""
-    equipment_list = await get_equipment_list(organization.inn)
+    equipment_list = await get_equipment_list(organization.inn, offset=offset, limit=limit)
     return equipment_list
 
 

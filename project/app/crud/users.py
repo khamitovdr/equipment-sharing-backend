@@ -41,5 +41,5 @@ async def update_user(
     return user
 
 
-async def get_users(skip: int = 0, limit: int = 100) -> list[User]:
-    return await User.all().offset(skip).limit(limit)  # .prefetch_related("organization")
+async def get_users(offset: int = 0, limit: int = 40) -> list[User]:
+    return await User.all().order_by("-created_at").offset(offset).limit(limit)  # .prefetch_related("organization")

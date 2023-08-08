@@ -70,7 +70,7 @@ async def update_notifications_status(notification_id_list: list[int], new_statu
 
 
 async def get_renter_notifications(
-    user: User, unread: bool = False, offset: int = 0, limit: int = 20
+    user: User, unread: bool = False, offset: int = 0, limit: int = 40
 ) -> list[Notification]:
     if unread:
         notifications = Notification.filter(recipient=user, status=NotificationStatus.CREATED)
@@ -89,7 +89,7 @@ async def get_renter_notifications(
 
 
 async def get_owner_notifications(
-    user: User, unread: bool = False, offset: int = 0, limit: int = 20
+    user: User, unread: bool = False, offset: int = 0, limit: int = 40
 ) -> list[Notification]:
     await user.fetch_related("organization")
     if unread:
