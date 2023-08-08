@@ -96,8 +96,8 @@ async def upload_equipment_document(
     organization: Organization = Depends(get_current_verified_organization),
 ):
     """Upload equipment document"""
-    file_id = await create_file(document, EquipmentDocument)
-    return file_id
+    file = await create_file(document, EquipmentDocument)
+    return file.id
 
 
 @router.delete("/document/{document_id}/")
@@ -115,8 +115,8 @@ async def upload_equipment_media(
     organization: Organization = Depends(get_current_verified_organization),
 ):
     """Upload equipment media"""
-    file_id = await create_file(media, EquipmentMedia)
-    return file_id
+    file = await create_file(media, EquipmentMedia)
+    return file.id
 
 
 @router.delete("/media/{media_id}/")

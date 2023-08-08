@@ -1,12 +1,16 @@
 from tortoise import fields, models
+from tortoise.contrib.postgres.fields import ArrayField
 
 
 class FileBaseModel(models.Model):
     SAVE_PATH = None
 
-    name = fields.CharField(max_length=255, null=True)
-    media_type = fields.CharField(max_length=255, null=True)
-    path = fields.CharField(max_length=255)
+    name = fields.CharField(max_length=255)
+    media_type = fields.CharField(max_length=255)
+    media_format = fields.CharField(max_length=255)
+    hash = fields.CharField(max_length=255)
+    original_path = fields.CharField(max_length=255)
+    path = fields.JSONField()
     created_at = fields.DatetimeField(auto_now_add=True)
     host: fields.ForeignKeyRelation
 
