@@ -29,6 +29,7 @@ from app.schemas.equipment import (
     EquipmentSchema,
     EquipmentUpdateSchema,
 )
+from app.schemas.files import FileBaseSchema
 from app.services.auth import get_current_active_user
 from app.services.organizations import get_current_verified_organization
 
@@ -90,14 +91,14 @@ async def delete_equipment_(
     await delete_equipment(equipment)
 
 
-@router.post("/document/", response_model=int)
+@router.post("/document/", response_model=FileBaseSchema)
 async def upload_equipment_document(
     document: UploadFile,
     organization: Organization = Depends(get_current_verified_organization),
 ):
     """Upload equipment document"""
     file = await create_file(document, EquipmentDocument)
-    return file.id
+    return file
 
 
 @router.delete("/document/{document_id}/")
@@ -109,14 +110,14 @@ async def delete_equipment_document(
     await delete_file(document_id, EquipmentDocument)
 
 
-@router.post("/media/", response_model=int)
+@router.post("/media/", response_model=FileBaseSchema)
 async def upload_equipment_media(
     media: UploadFile,
     organization: Organization = Depends(get_current_verified_organization),
 ):
     """Upload equipment media"""
     file = await create_file(media, EquipmentMedia)
-    return file.id
+    return file
 
 
 @router.delete("/media/{media_id}/")

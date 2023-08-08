@@ -5,6 +5,7 @@ from tortoise.contrib.postgres.fields import ArrayField
 class FileBaseModel(models.Model):
     SAVE_PATH = None
 
+    id = fields.BigIntField(pk=True)
     name = fields.CharField(max_length=255)
     media_type = fields.CharField(max_length=255)
     media_format = fields.CharField(max_length=255)
@@ -19,4 +20,4 @@ class FileBaseModel(models.Model):
 
     class PydanticMeta:
         backward_relations = False
-        exclude = ["created_at"]
+        exclude = ["created_at", "host", "host_id", "hash"]
