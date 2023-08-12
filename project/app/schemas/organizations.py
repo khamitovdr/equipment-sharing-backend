@@ -22,5 +22,5 @@ class DadataResponseSchema(BaseModel):
 
 OrganizationSchema = pydantic_model_creator(Organization, name="OrganizationSchema")
 OrganizationListSchema = pydantic_queryset_creator(
-    Organization, exclude=("main_activity", "ogrn", "kpp", "authorized_capital_k_rubles")
+    Organization, exclude=("ogrn", "kpp", "authorized_capital_k_rubles")
 )

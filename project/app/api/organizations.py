@@ -20,7 +20,6 @@ async def read_organization_me(current_user: Annotated[User, Depends(get_current
     if current_user.organization is None:
         raise HTTPException(status_code=404, detail="Organization not found")
     organization = current_user.organization
-    await organization.fetch_related("main_activity")
     return organization
 
 

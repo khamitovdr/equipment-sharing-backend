@@ -82,7 +82,7 @@ async def get_renter_notifications(
         .limit(limit)
         .all()
         .prefetch_related(
-            "organization__main_activity",
+            "organization",
             "recipient",
         )
     )
@@ -104,7 +104,7 @@ async def get_owner_notifications(
         .limit(limit)
         .all()
         .prefetch_related(
-            "organization__main_activity",
+            "organization",
             "recipient",
         )
     )

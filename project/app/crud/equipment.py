@@ -84,7 +84,7 @@ async def delete_equipment(equipment: Equipment) -> int:
 
 async def get_equipment_by_id(equipment_id: int) -> Equipment | None:
     equipment = await Equipment.get_or_none(id=equipment_id).prefetch_related(
-        "organization__main_activity", "added_by", "category", "documents", "photo_and_video"
+        "organization", "added_by", "category", "documents", "photo_and_video"
     )
     return equipment
 
@@ -106,7 +106,7 @@ async def get_equipment_list(
     return (
         await Equipment.filter(**filtering_params)
         .prefetch_related(
-            "organization__main_activity",
+            "organization",
             "category",
             "photo_and_video",
         )

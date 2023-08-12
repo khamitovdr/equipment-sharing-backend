@@ -51,7 +51,7 @@ async def create_equipment_(
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
 
-    await equipment.fetch_related("organization__main_activity", "category", "documents", "photo_and_video")
+    await equipment.fetch_related("organization", "category", "documents", "photo_and_video")
     return equipment
 
 
@@ -197,3 +197,11 @@ async def change_equipment_status(
     status = EquipmentStatus(status.value)
     equipment = await update_equipment_status(equipment, status)
     return equipment
+
+
+@router.get("/fill_equipment_categories_db_table")
+async def init_equipment_categories_db_table_():
+    """Fill new database with activities and equipment categories"""
+    from app.services.equipment import init_equipment_categories_db_table
+    await init_equipment_categories_db_table()
+    return {"message": "OK"}

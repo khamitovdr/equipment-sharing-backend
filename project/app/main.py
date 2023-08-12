@@ -51,15 +51,3 @@ async def custom_swagger_ui_html_cdn():
         # swagger_ui_dark.css CDN link
         swagger_css_url="https://cdn.jsdelivr.net/gh/Itz-fork/Fastapi-Swagger-UI-Dark/assets/swagger_ui_dark.min.css",
     )
-
-
-@app.get("/fill_db")
-async def init_activities_db():
-    """Fill new database with activities and equipment categories"""
-    from app.services.equipment import init_equipment_categories_db_table
-    from app.services.organizations import init_activities_db_table
-
-    await init_activities_db_table()
-    await init_equipment_categories_db_table()
-
-    return {"message": "OK"}

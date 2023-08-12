@@ -1,13 +1,11 @@
-import json
 import logging
-import os
 from typing import Annotated
 
 # from dadata import DadataAsync
 from fastapi import Depends, HTTPException, status
 
+from app.config import get_settings
 from app.crud.organizations import (
-    create_activities,
     create_organization,
     get_organization_by_inn,
 )
@@ -19,7 +17,7 @@ from app.services.auth import get_current_active_user
 log = logging.getLogger("uvicorn")
 
 
-DADATA_TOKEN = os.getenv("DADATA_TOKEN")
+dadata_token = get_settings().dadata_token
 
 
 async def get_or_create_organization_by_inn(inn: str) -> Organization:
@@ -36,7 +34,7 @@ async def get_or_create_organization_by_inn(inn: str) -> Organization:
 # async def get_organization_data_by_code(query: str) -> DadataResponseSchema:
 #     """Returns organization data by code from DaData API."""
 #     log.info(f"Getting organization data by code {query} from DaData API...")
-#     async with DadataAsync(DADATA_TOKEN) as dadata:
+#     async with DadataAsync(dadata_token) as dadata:
 #         result = await dadata.find_by_id("party", query, status="ACTIVE", count=1)
 
 #     if not result:
@@ -96,9 +94,3 @@ async def get_current_verified_organization(
     organization = await current_user.organization
     log.info(f"Current user's verified organization {organization.inn} received successfully")
     return organization
-
-
-async def init_activities_db_table():
-    with open("app/data/fns/okveds.json", "r") as f:
-        okveds = json.load(f)
-        await create_activities(okveds)
