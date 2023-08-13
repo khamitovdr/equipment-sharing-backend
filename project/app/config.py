@@ -8,7 +8,7 @@ log = logging.getLogger("uvicorn")
 
 class Settings(BaseSettings):
     environment: str = "dev"
-    testing: bool = 0
+    testing: bool = False
     database_url: AnyUrl = None
     secret_key: str = None
     dadata_token: str = None

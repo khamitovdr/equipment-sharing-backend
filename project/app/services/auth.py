@@ -9,16 +9,15 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from app.crud.users import get_user_by_email
+from app.config import get_settings
 from app.models.users import User
 from app.schemas.auth import TokenDataSchema
 
-# from app.models.organizations import Organization
 
-
+ALGORITHM = "HS256"
 # to get a string like this run:
 # openssl rand -hex 32
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = "HS256"
+secret_key = get_settings().secret_key
 
 
 CREDENTIALS_EXCEPTION = HTTPException(
@@ -60,14 +59,14 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=ALGORITHM)
     return encoded_jwt
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
     log.info(f"Getting current user by token {token[:10]}...")
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         log.info(f"Current user email: {email}")
         if email is None:

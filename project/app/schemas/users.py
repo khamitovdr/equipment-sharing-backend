@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator
 from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
 from app import _init_models  # noqa: F401
@@ -12,6 +12,12 @@ class UserCreateSchema(BaseModel):
     full_name: str
     password: str
     organization_inn: str or None = None
+
+    @validator("organization_inn", pre=True, always=True)
+    def check_organization_inn(cls, v, values):
+        if values.get("is_owner") and not v:
+            raise ValueError("Organization INN is required for owners")
+        return v
 
 
 class UserUpdateSchema(BaseModel):
