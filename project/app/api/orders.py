@@ -114,7 +114,7 @@ async def respond_to_order_(
     order = await get_order_by_id(order_id)
     if order is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-    if order.equipment.organization != organization:
+    if await order.equipment.organization != organization:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
     response = OrderStatus(response.value)
