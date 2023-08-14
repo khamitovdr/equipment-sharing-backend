@@ -92,6 +92,18 @@ async def get_owner_notifications(
     user: User, unread: bool = False, offset: int = 0, limit: int = 40
 ) -> list[Notification]:
     await user.fetch_related("organization")
+
+    # TODO: fix this
+    # dirty hack! Works only because get_notifications_owner depends on verified_organization
+    ##############################
+    if await Notification.filter(Q(recipient=user) | Q(organization=user.organization)).count() == 0:
+
+        from app.crud.notifications import create_organization_status_notification
+        from app.models.notifications import OrganizationVerificationType
+
+        await create_organization_status_notification(user, event=OrganizationVerificationType.ORGANIZATION_VERIFIED)
+    ##############################
+
     if unread:
         notifications = Notification.filter(
             Q(recipient=user) | Q(organization=user.organization), status=NotificationStatus.CREATED
