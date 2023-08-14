@@ -20,7 +20,9 @@ docker compose exec web aerich init-db                        # generates migrat
 docker compose exec web aerich upgrade                        # update database tables with existing migrations (after restarting container)
 
 # Running tests
-docker compose exec web python -m pytest .
+docker compose exec web python -m pytest --disable-warnings
+docker compose exec web python -m pytest --disable-warnings --lf                          # run only last failed tests
+docker compose exec web python -m pytest --disable-warnings --cov="." --cov-report html   # with coverage report
 
 
 ######################
