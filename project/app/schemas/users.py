@@ -17,7 +17,7 @@ class UserCreateSchema(BaseModel):
 
     @validator("phone")
     def check_phone(cls, v):
-        phone = re.compile("^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$")
+        phone = re.compile(r"^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$")
         if not phone.match(v):
             raise ValueError("Invalid phone number")
         return v
@@ -33,7 +33,7 @@ class UserCreateSchema(BaseModel):
         if not re.search("[0-9]", v):
             raise ValueError("Password must contain at least one digit")
         return v
-    
+
     @validator("organization_inn", always=True)
     def check_organization_inn(cls, v, values):
         if values.get("is_owner") and not v:

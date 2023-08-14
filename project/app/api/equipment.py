@@ -131,13 +131,15 @@ async def delete_equipment_media(
 
 @router.get("/", response_model=EquipmentListSchema)
 async def get_equipment_list_(
-    category_id: int = None, 
+    category_id: int = None,
     organization_inn: str = None,
     offset: int = 0,
     limit: int = 40,
 ):
     """Get list of equipment to rent (all, by category or from particular organization)"""
-    equipment_list = await get_equipment_list(organization_inn, category_id, EquipmentStatus.PUBLISHED, offset=offset, limit=limit)
+    equipment_list = await get_equipment_list(
+        organization_inn, category_id, EquipmentStatus.PUBLISHED, offset=offset, limit=limit
+    )
     return equipment_list
 
 
@@ -203,5 +205,6 @@ async def change_equipment_status(
 async def init_equipment_categories_db_table_():
     """Fill new database with activities and equipment categories"""
     from app.services.equipment import init_equipment_categories_db_table
+
     await init_equipment_categories_db_table()
     return {"message": "OK"}

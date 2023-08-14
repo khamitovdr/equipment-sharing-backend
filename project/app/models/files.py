@@ -1,5 +1,4 @@
 from tortoise import fields, models
-from tortoise.contrib.postgres.fields import ArrayField
 
 
 class FileBaseModel(models.Model):

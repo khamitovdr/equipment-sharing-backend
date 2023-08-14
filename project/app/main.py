@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
     await scheduler.start()
 
     yield
-    
+
     # shutdown
     log.info("Shutting down...")
     await scheduler.stop()

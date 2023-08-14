@@ -1,11 +1,11 @@
 import hashlib
+import io
 import logging
 import os
-import io
 from typing import Type
 
-from PIL import Image
 from fastapi import UploadFile
+from PIL import Image
 
 from app.models.files import FileBaseModel
 
@@ -23,14 +23,14 @@ async def create_file(file: UploadFile, cls: Type[FileBaseModel]) -> FileBaseMod
 
     def get_save_path(suffix: str = "", ext: str = ext) -> str:
         return os.path.join(UPLOAD_DIR, cls.SAVE_PATH, f"{hash}{'_' if suffix else ''}{suffix}.{ext}")
-    
+
     path = {
         "original": get_save_path("original"),
     }
 
     try:
         if media_type == "image":
-            image = Image.open(io.BytesIO(data)).convert('RGB')
+            image = Image.open(io.BytesIO(data)).convert("RGB")
 
             image_large = image.copy()
             image_medium = image.copy()
@@ -40,19 +40,21 @@ async def create_file(file: UploadFile, cls: Type[FileBaseModel]) -> FileBaseMod
             image_medium.thumbnail((512, 512))
             image_small.thumbnail((128, 128))
 
-            path.update({
-                "webp": get_save_path("original", ext="webp"),
-                "large": get_save_path("large", ext="webp"),
-                "medium": get_save_path("medium", ext="webp"),
-                "small": get_save_path("small", ext="webp"),
-            })
+            path.update(
+                {
+                    "webp": get_save_path("original", ext="webp"),
+                    "large": get_save_path("large", ext="webp"),
+                    "medium": get_save_path("medium", ext="webp"),
+                    "small": get_save_path("small", ext="webp"),
+                }
+            )
 
             image.save(path["original"], quality=100)
             image.save(path["webp"], quality=100)
             image_large.save(path["large"], quality=100)
             image_medium.save(path["medium"], quality=100)
             image_small.save(path["small"], quality=100)
-        
+
         elif media_type in ["video", "application"]:
             with open(path["original"], "wb") as f:
                 f.write(data)
@@ -61,7 +63,7 @@ async def create_file(file: UploadFile, cls: Type[FileBaseModel]) -> FileBaseMod
             raise TypeError(f"Unsupported media type: {media_type}")
 
         file_record = await cls.create(
-            name=file.filename, 
+            name=file.filename,
             media_type=media_type,
             media_format=media_format,
             hash=hash,

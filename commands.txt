@@ -34,6 +34,7 @@ python -m flake8 ./project/app/ --config ./project/setup.cfg
 python -m black ./project/app/ --config ./project/pyproject.toml --check
 python -m black ./project/app/ --config ./project/pyproject.toml --diff --color
 python -m black ./project/app/ --config ./project/pyproject.toml
+python -m black ./project/tests/ --config ./project/pyproject.toml                 # for tests
 
 python -m isort ./project --check-only
 python -m isort ./project --diff --color

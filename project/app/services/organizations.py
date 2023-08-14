@@ -5,10 +5,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 
 from app.config import get_settings
-from app.crud.organizations import (
-    create_organization,
-    get_organization_by_inn,
-)
+from app.crud.organizations import create_organization, get_organization_by_inn
 from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.organizations import DadataResponseSchema

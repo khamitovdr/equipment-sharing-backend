@@ -1,8 +1,8 @@
 import pytest
-from httpx import AsyncClient
 from fastapi import status
+from httpx import AsyncClient
 
-from tests.conftest import TEST_USER_DATA, TEST_OWNER_DATA, TEST_RENTER_DATA
+from tests.conftest import TEST_OWNER_DATA, TEST_RENTER_DATA, TEST_USER_DATA
 
 
 @pytest.mark.anyio
@@ -20,34 +20,34 @@ from tests.conftest import TEST_USER_DATA, TEST_OWNER_DATA, TEST_RENTER_DATA
             status.HTTP_201_CREATED,
         ),
         (
-            {   # Owner without inn
+            {  # Owner without inn
                 **TEST_USER_DATA,
                 "is_owner": True,
             },
             status.HTTP_422_UNPROCESSABLE_ENTITY,
         ),
         (
-            {   # Invalid email
+            {  # Invalid email
                 **TEST_USER_DATA,
                 "email": "user@test",
             },
             status.HTTP_422_UNPROCESSABLE_ENTITY,
         ),
         (
-            {   # Invalid phone
+            {  # Invalid phone
                 **TEST_USER_DATA,
                 "phone": "99999999999",
             },
             status.HTTP_422_UNPROCESSABLE_ENTITY,
         ),
         (
-            {   # Invalid password
+            {  # Invalid password
                 **TEST_USER_DATA,
                 "password": "password",
             },
             status.HTTP_422_UNPROCESSABLE_ENTITY,
         ),
-    ]
+    ],
 )
 async def test_user_create(client: AsyncClient, new_user_data: dict, status_code: int):
     # Given

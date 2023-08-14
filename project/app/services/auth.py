@@ -7,11 +7,10 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from app.crud.users import get_user_by_email
 from app.config import get_settings
+from app.crud.users import get_user_by_email
 from app.models.users import User
 from app.schemas.auth import TokenDataSchema
-
 
 ALGORITHM = "HS256"
 # to get a string like this run:

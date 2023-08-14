@@ -97,7 +97,6 @@ async def get_owner_notifications(
     # dirty hack! Works only because get_notifications_owner depends on verified_organization
     ##############################
     if await Notification.filter(Q(recipient=user) | Q(organization=user.organization)).count() == 0:
-
         from app.crud.notifications import create_organization_status_notification
         from app.models.notifications import OrganizationVerificationType
 

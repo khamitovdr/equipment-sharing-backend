@@ -8,7 +8,6 @@ from app.config import Settings, get_settings
 from app.db import MODELS
 from app.main import create_application
 
-
 #####################
 #   General setup   #
 #####################
@@ -28,9 +27,7 @@ def get_settings_override() -> Settings:
 
 async def init_db(db_url, create_db: bool = False, schemas: bool = False) -> None:
     """Initial database connection"""
-    await Tortoise.init(
-        db_url=db_url, modules={"models": MODELS}, _create_db=create_db
-    )
+    await Tortoise.init(db_url=db_url, modules={"models": MODELS}, _create_db=create_db)
     if create_db:
         print(f"Database created! {db_url = }")
     if schemas:
@@ -39,7 +36,7 @@ async def init_db(db_url, create_db: bool = False, schemas: bool = False) -> Non
 
 
 async def init(db_url: str = DB_URL) -> None:
-    await init_db(db_url, False, True) # create_db=False, schemas=True
+    await init_db(db_url, False, True)  # create_db=False, schemas=True
 
 
 @pytest.fixture(scope="session")
