@@ -46,7 +46,7 @@ async def read_user(user_id: int):
     return user
 
 
-@router.post("/", response_model=UserSchema)
+@router.post("/", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
 async def create_new_user(user_schema: UserCreateSchema):
     """Create new user"""
     if await get_user_by_email(user_schema.email):
@@ -62,7 +62,7 @@ async def create_new_user(user_schema: UserCreateSchema):
     return user
 
 
-@router.put("/me/", response_model=UserSchema)
+@router.put("/me/", response_model=UserSchema, status_code=status.HTTP_202_ACCEPTED)
 async def update_current_user(
     user_schema: UserUpdateSchema, current_user: Annotated[User, Depends(get_current_active_user)]
 ):

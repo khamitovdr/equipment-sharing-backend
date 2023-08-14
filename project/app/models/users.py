@@ -22,4 +22,4 @@ class User(models.Model):
 
     class PydanticMeta:
         backward_relations = False
-        exclude = ["hashed_password", "is_admin", "is_verified_organization_member", "created_at", "organization"]
+        exclude = ["hashed_password", "is_admin", "created_at", "organization"]

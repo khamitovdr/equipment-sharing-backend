@@ -1,3 +1,5 @@
+import re
+
 from pydantic import BaseModel, EmailStr, validator
 from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
@@ -13,20 +15,53 @@ class UserCreateSchema(BaseModel):
     password: str
     organization_inn: str or None = None
 
+    @validator("phone", pre=True, always=True)
+    def check_phone(cls, v):
+        phone = re.compile("^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$")
+        if not phone.match(v):
+            raise ValueError("Invalid phone number")
+        return v
+
+    @validator("password", pre=True, always=True)
+    def check_password(cls, v):
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        if not re.search("[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search("[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search("[0-9]", v):
+            raise ValueError("Password must contain at least one digit")
+        return v
+    
     @validator("organization_inn", pre=True, always=True)
     def check_organization_inn(cls, v, values):
         if values.get("is_owner") and not v:
             raise ValueError("Organization INN is required for owners")
+        if v and not v.isdigit():
+            raise ValueError("Organization INN must contain only digits")
+        if v and len(v) not in (10, 12):
+            raise ValueError("Organization INN must contain 10 or 12 digits")
         return v
 
 
-class UserUpdateSchema(BaseModel):
+class UserUpdateSchema(UserCreateSchema):
     is_owner: bool or None = None
+    email: EmailStr or None = None
     phone: str or None = None
     full_name: str or None = None
     password: str or None = None
     new_password: str or None = None
-    organization_inn: str or None = None
+
+    @validator("password", pre=True, always=True)
+    def check_password_provided(cls, v, values):
+        if values.get("new_password") and not v:
+            raise ValueError("Current password is required to change password")
+        return v
+
+    @validator("new_password", pre=True, always=True)
+    def check_new_password(cls, v):
+        return super().check_password(v)
 
 
 # "name" argument is critical for correct work of pydantic_model_creator!
