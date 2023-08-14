@@ -15,14 +15,14 @@ class UserCreateSchema(BaseModel):
     password: str
     organization_inn: str or None = None
 
-    @validator("phone", pre=True)
+    @validator("phone")
     def check_phone(cls, v):
         phone = re.compile("^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$")
         if not phone.match(v):
             raise ValueError("Invalid phone number")
         return v
 
-    @validator("password", pre=True)
+    @validator("password")
     def check_password(cls, v):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
@@ -34,7 +34,7 @@ class UserCreateSchema(BaseModel):
             raise ValueError("Password must contain at least one digit")
         return v
     
-    @validator("organization_inn", pre=True)
+    @validator("organization_inn", always=True)
     def check_organization_inn(cls, v, values):
         if values.get("is_owner") and not v:
             raise ValueError("Organization INN is required for owners")
@@ -53,11 +53,11 @@ class UserUpdateSchema(UserCreateSchema):
     password: str or None = None
     new_password: str or None = None
 
-    @validator("password", pre=True)
+    @validator("password")
     def check_password(cls, v):
         return v
 
-    @validator("new_password", pre=True)
+    @validator("new_password")
     def check_new_password(cls, v):
         return super().check_password(v)
 
