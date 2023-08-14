@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -12,8 +13,22 @@ from app.db_signals import files_signals, orders_signals  # noqa: F401
 log = logging.getLogger("uvicorn")
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup
+    log.info("Starting up...")
+    init_db(app)
+    await scheduler.start()
+
+    yield
+    
+    # shutdown
+    log.info("Shutting down...")
+    await scheduler.stop()
+
+
 def create_application() -> FastAPI:
-    application = FastAPI()
+    application = FastAPI(lifespan=lifespan, title="Equipment sharing service")
     application.include_router(token.router, prefix="/login", tags=["auth token"])
     application.include_router(users.router, prefix="/users", tags=["users"])
     application.include_router(organizations.router, prefix="/organizations", tags=["organizations"])
@@ -27,19 +42,6 @@ def create_application() -> FastAPI:
 
 
 app = create_application()
-
-
-@app.on_event("startup")
-async def startup_event():
-    log.info("Starting up...")
-    init_db(app)
-    await scheduler.start()
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    log.info("Shutting down...")
-    await scheduler.stop()
 
 
 # Swagger ui dark theme
