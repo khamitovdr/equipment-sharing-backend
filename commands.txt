@@ -23,6 +23,7 @@ docker compose exec web aerich upgrade                        # update database 
 docker compose exec web python -m pytest --disable-warnings
 docker compose exec web python -m pytest --disable-warnings --lf                          # run only last failed tests
 docker compose exec web python -m pytest --disable-warnings --cov="." --cov-report html   # with coverage report
+docker compose exec web python -m pytest --disable-warnings -o log_cli=true               # with logs
 
 
 ######################

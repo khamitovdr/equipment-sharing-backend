@@ -4,6 +4,7 @@ import pytest
 from fastapi import status
 from httpx import AsyncClient
 
+from app.models.users import User
 from tests.conftest import TEST_USER_DATA
 
 LOGIN_DATA = {
@@ -39,7 +40,7 @@ LOGIN_DATA = {
         ),
     ],
 )
-async def test_user_login(client: AsyncClient, user_in_db: dict, login_data: dict, status_code: int):
+async def test_user_login(client: AsyncClient, user_in_db: User, login_data: dict, status_code: int):
     # Given
 
     # When
@@ -55,7 +56,7 @@ async def test_user_login(client: AsyncClient, user_in_db: dict, login_data: dic
 
 
 @pytest.mark.anyio
-async def test_auth_token_expired(client_instant_token_expired: AsyncClient, user_in_db: dict):
+async def test_auth_token_expired(client_instant_token_expired: AsyncClient, user_in_db: User):
     # Given
     login_response = await client_instant_token_expired.post("/login/", data=LOGIN_DATA)
     access_token = login_response.json()["access_token"]

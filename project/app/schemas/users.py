@@ -57,8 +57,12 @@ class UserUpdateSchema(UserCreateSchema):
     def check_password(cls, v):
         return v
 
-    @validator("new_password")
-    def check_new_password(cls, v):
+    @validator("new_password", always=True)
+    def check_new_password(cls, v, values):
+        if values.get("password") and not v:
+            raise ValueError("New password is required")
+        if v is None:
+            return v
         return super().check_password(v)
 
 

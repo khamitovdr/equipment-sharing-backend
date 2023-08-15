@@ -42,6 +42,8 @@ def get_password_hash(password) -> str:
 
 
 async def authenticate_user(email: str, password: str) -> User or bool:
+    if email is None or password is None:
+        return False
     user = await get_user_by_email(email)
     if user is None:
         return False

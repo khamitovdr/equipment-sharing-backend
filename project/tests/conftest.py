@@ -1,12 +1,19 @@
 import os
+from datetime import date
 
 import pytest
 from httpx import AsyncClient
 from tortoise import Tortoise
 
+from app.api.users import create_new_user
 from app.config import Settings, get_settings
+from app.crud.organizations import create_organization
 from app.db import MODELS
 from app.main import create_application
+from app.models.organizations import Organization
+from app.models.users import User
+from app.schemas.organizations import DadataResponseSchema
+from app.schemas.users import UserCreateSchema
 
 #####################
 #   General setup   #
@@ -100,6 +107,100 @@ TEST_OWNER_DATA = {
 
 
 @pytest.fixture
-async def user_in_db(client: AsyncClient) -> dict:
-    response = await client.post("/users/", json=TEST_USER_DATA)
-    return response.json()
+async def user_in_db() -> User:
+    user_schema = UserCreateSchema(**TEST_USER_DATA)
+    user = await create_new_user(user_schema)
+    return user
+
+
+# TODO: merge with user_in_db fixture (use parametrization)
+@pytest.fixture
+async def not_verified_owner_in_db() -> User:
+    user_schema = UserCreateSchema(**TEST_OWNER_DATA)
+    user = await create_new_user(user_schema)
+    return user
+
+
+# TODO: merge with user_in_db fixture (use parametrization)
+@pytest.fixture
+async def verified_owner_in_db() -> User:
+    user_schema = UserCreateSchema(**TEST_OWNER_DATA)
+    user = await create_new_user(user_schema)
+    user.is_verified_organization_member = True
+    await user.save()
+    return user
+
+
+@pytest.fixture
+async def authorized_user_client(user_in_db: User) -> AsyncClient:
+    login_data = {
+        "username": user_in_db.email,
+        "password": TEST_USER_DATA["password"],
+    }
+    app = create_application()
+    app.dependency_overrides[get_settings] = get_settings_override
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        login_response = await client.post("/login/", data=login_data)
+        access_token = login_response.json()["access_token"]
+        client.headers["Authorization"] = f"Bearer {access_token}"
+        print("Client is ready")
+        yield client
+
+
+# TODO: merge with authorized_user_client fixture (use parametrization)
+@pytest.fixture
+async def authorized_not_verified_owner_client(not_verified_owner_in_db: User) -> AsyncClient:
+    login_data = {
+        "username": not_verified_owner_in_db.email,
+        "password": TEST_OWNER_DATA["password"],
+    }
+    app = create_application()
+    app.dependency_overrides[get_settings] = get_settings_override
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        login_response = await client.post("/login/", data=login_data)
+        access_token = login_response.json()["access_token"]
+        client.headers["Authorization"] = f"Bearer {access_token}"
+        print("Client is ready")
+        yield client
+
+
+# TODO: merge with authorized_user_client fixture (use parametrization)
+@pytest.fixture
+async def authorized_owner_client(verified_owner_in_db: User) -> AsyncClient:
+    login_data = {
+        "username": verified_owner_in_db.email,
+        "password": TEST_OWNER_DATA["password"],
+    }
+    app = create_application()
+    app.dependency_overrides[get_settings] = get_settings_override
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        login_response = await client.post("/login/", data=login_data)
+        access_token = login_response.json()["access_token"]
+        client.headers["Authorization"] = f"Bearer {access_token}"
+        print("Client is ready")
+        yield client
+
+
+##############################
+#   Organizations fixtures   #
+##############################
+
+
+TEST_ORGANIZATION = DadataResponseSchema(
+    short_name="LLC Test Organization",
+    full_name="Limited Liability Company Test Organization",
+    ogrn="1234567890123",
+    inn="0000000000",
+    kpp="123456789",
+    registration_date=date(2020, 1, 1),
+    # authorized_capital_k_rubles=100,
+    legal_address="Moscow, Test street, 1",
+    manager_name="John Doe",
+    main_activity="01.1",
+)
+
+
+@pytest.fixture
+async def organization_in_db() -> Organization:
+    organization = await create_organization(TEST_ORGANIZATION)
+    return organization

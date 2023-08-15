@@ -18,7 +18,7 @@ class User(models.Model):
     created_at = fields.DatetimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.email
+        return self.email  # pragma: no cover
 
     class PydanticMeta:
         backward_relations = False
