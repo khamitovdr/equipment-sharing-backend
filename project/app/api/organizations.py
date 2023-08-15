@@ -19,8 +19,7 @@ async def read_organization_me(current_user: Annotated[User, Depends(get_current
     await current_user.fetch_related("organization")
     if current_user.organization is None:
         raise HTTPException(status_code=404, detail="Organization not found")
-    organization = current_user.organization
-    return organization
+    return current_user.organization
 
 
 @router.get("/{inn}/", response_model=OrganizationSchema)

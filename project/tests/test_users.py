@@ -287,9 +287,6 @@ async def test_user_update(
             assert response.json()[field] == user_update_data[field]
 
 
-# TODO: Update inn
-
-
 @pytest.mark.anyio
 @pytest.mark.parametrize(
     "user_client, user_update_data, is_verified_organization_member",

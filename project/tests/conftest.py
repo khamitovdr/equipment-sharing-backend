@@ -117,6 +117,7 @@ async def user_in_db() -> User:
 @pytest.fixture
 async def not_verified_owner_in_db() -> User:
     user_schema = UserCreateSchema(**TEST_OWNER_DATA)
+    user_schema.email = "not_verified_owner@test.com"
     user = await create_new_user(user_schema)
     return user
 
@@ -125,6 +126,7 @@ async def not_verified_owner_in_db() -> User:
 @pytest.fixture
 async def verified_owner_in_db() -> User:
     user_schema = UserCreateSchema(**TEST_OWNER_DATA)
+    user_schema.email = "verified_owner@test.com"
     user = await create_new_user(user_schema)
     user.is_verified_organization_member = True
     await user.save()
