@@ -26,9 +26,9 @@ class UserCreateSchema(BaseModel):
     def check_password(cls, v):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
-        if not re.search("[a-z]", v):
+        if not re.search("[a-zа-я]", v):
             raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search("[A-Z]", v):
+        if not re.search("[A-ZА-Я]", v):
             raise ValueError("Password must contain at least one uppercase letter")
         if not re.search("[0-9]", v):
             raise ValueError("Password must contain at least one digit")
