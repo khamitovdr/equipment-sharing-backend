@@ -17,8 +17,8 @@ from app.schemas.equipment import EquipmentCreateSchema, EquipmentUpdateSchema
 log = logging.getLogger("uvicorn")
 
 
-async def create_equipment_category(name: str, user: User, verified: bool = False) -> EquipmentCategory:
-    category = EquipmentCategory(name=name, verified=verified, added_by=user)
+async def create_equipment_category(name: str, added_by: User, verified: bool = False) -> EquipmentCategory:
+    category = EquipmentCategory(name=name, added_by=added_by, verified=verified)
     await category.save()
     return category
 

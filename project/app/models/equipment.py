@@ -30,7 +30,7 @@ class TimeInterval(str, Enum):
 class EquipmentCategory(models.Model):
     # code = fields.CharField(max_length=3)
     name = fields.CharField(max_length=255)
-    creator = fields.ForeignKeyField(
+    added_by = fields.ForeignKeyField(
         "models.User", related_name="equipment_categories", on_delete=fields.SET_NULL, null=True
     )
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -38,7 +38,7 @@ class EquipmentCategory(models.Model):
 
     class PydanticMeta:
         backward_relations = False
-        exclude = ["creator", "creator_id", "created_at", "verified"]
+        exclude = ["added_by", "added_by_id", "created_at", "verified"]
 
 
 # For pydantic schema generation

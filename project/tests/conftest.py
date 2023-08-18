@@ -8,10 +8,12 @@ from tortoise import Tortoise
 from app.api.users import create_new_user
 from app.config import Settings, get_settings
 from app.crud.organizations import create_organization
+from app.crud.equipment import create_equipment_category
 from app.db import MODELS
 from app.main import create_application
 from app.models.organizations import Organization
 from app.models.users import User
+from app.models.equipment import Equipment, EquipmentCategory
 from app.schemas.organizations import DadataResponseSchema
 from app.schemas.users import UserCreateSchema
 
@@ -93,10 +95,6 @@ TEST_USER_DATA = {
     "is_owner": False,
     "password": "SecretPassword123",
     "phone": "+79999999999",
-}
-
-TEST_RENTER_DATA = {
-    **TEST_USER_DATA,
 }
 
 TEST_OWNER_DATA = {
@@ -206,3 +204,35 @@ TEST_ORGANIZATION = DadataResponseSchema(
 async def organization_in_db() -> Organization:
     organization = await create_organization(TEST_ORGANIZATION)
     return organization
+
+
+#####################################
+#   Equipment Categories fixtures   #
+#####################################
+
+
+@pytest.fixture
+async def not_verified_equipment_categories_in_db() -> list[EquipmentCategory]:
+    categories = [
+        await create_equipment_category(name=name, verified=False, added_by=None)
+        for name in ("Not verified Category 1", "Not verified Category 2")
+    ]
+    return categories
+
+
+@pytest.fixture
+async def verified_equipment_categories_in_db() -> list[EquipmentCategory]:
+    categories = [
+        await create_equipment_category(name=name, verified=True, added_by=None)
+        for name in ("Test Category 1", "Test Category 2", "Test Category 3")
+    ]
+    return categories
+
+
+@pytest.fixture
+async def organizations_equipment_category_in_db(verified_owner_in_db: User) -> EquipmentCategory:
+    category = await create_equipment_category(
+        name="Organization's Category",
+        added_by=verified_owner_in_db,
+    )
+    return category

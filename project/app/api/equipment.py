@@ -161,7 +161,7 @@ async def get_equipment_categories_(organization_inn: str = None):
     return categories
 
 
-@router.post("/categories/", response_model=EquipmentCategorySchema)
+@router.post("/categories/", response_model=EquipmentCategorySchema, status_code=status.HTTP_201_CREATED)
 async def create_equipment_category_(
     name: str,
     current_user: User = Depends(get_current_active_user),

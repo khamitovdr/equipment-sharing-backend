@@ -4,7 +4,7 @@ from httpx import AsyncClient
 
 from app.models.organizations import Organization
 from app.models.users import User
-from tests.conftest import TEST_OWNER_DATA, TEST_RENTER_DATA, TEST_USER_DATA
+from tests.conftest import TEST_OWNER_DATA, TEST_USER_DATA
 
 
 @pytest.mark.anyio
@@ -20,7 +20,7 @@ from tests.conftest import TEST_OWNER_DATA, TEST_RENTER_DATA, TEST_USER_DATA
         ),
         (
             # Renter
-            TEST_RENTER_DATA,
+            TEST_USER_DATA,
             status.HTTP_201_CREATED,
             None,
             None,
