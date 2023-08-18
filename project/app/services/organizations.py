@@ -85,7 +85,7 @@ async def get_current_verified_organization(
     if current_user.organization is None or not current_user.is_verified_organization_member:
         log.error("Current user doesn't have an verified organization")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Current user doesn't have an verified organization",
         )
     organization = await current_user.organization
