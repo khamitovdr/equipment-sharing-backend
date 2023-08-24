@@ -50,9 +50,13 @@ async def file_pre_delete(
     using_db: Optional[BaseDBAsyncClient],
 ) -> None:
     try:
-        if await sender.filter(path=file.path).count() == 1:
-            log.info(f"Deleting file {file.path}")
-            os.remove(file.path)
+        if await sender.filter(original_path=file.original_path).count() > 0:
+            log.info(f"Deleting file {file.original_path}")
+            for path in file.path.values():
+                if os.path.exists(path):
+                    os.remove(path)
+                else:
+                    log.warning(f"File {path} doesn't exist")
     except Exception as e:
         log.error(f"Error while deleting file {file.path}: {e}")
         raise e
