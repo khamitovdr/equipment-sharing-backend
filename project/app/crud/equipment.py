@@ -34,15 +34,15 @@ async def create_equipment(
     equipment_dict = equipment_schema.dict(exclude_unset=True)
     equipment_dict["added_by"] = user
     equipment_dict["organization"] = organization
-    documents = equipment_dict.pop("documents_ids")
-    photo_and_video = equipment_dict.pop("photo_and_video_ids")
+    documents = equipment_dict.pop("documents_ids") if "documents_ids" in equipment_dict else None
+    photo_and_video = equipment_dict.pop("photo_and_video_ids") if "photo_and_video_ids" in equipment_dict else None
 
     equipment = await Equipment.create(**equipment_dict)
 
     try:
         host_not_set = Q(host_id__isnull=True)
-        await EquipmentDocument.filter(host_not_set, id__in=documents).update(host=equipment)
-        await EquipmentMedia.filter(host_not_set, id__in=photo_and_video).update(host=equipment)
+        if documents is not None: await EquipmentDocument.filter(host_not_set, id__in=documents).update(host=equipment)
+        if photo_and_video is not None: await EquipmentMedia.filter(host_not_set, id__in=photo_and_video).update(host=equipment)
     except Exception as e:
         log.error(f"Error while updating equipment {equipment.id} with documents and media: {e}")
         await equipment.delete()
@@ -53,8 +53,8 @@ async def create_equipment(
 
 async def update_equipment(equipment: Equipment, equipment_schema: EquipmentUpdateSchema) -> Equipment:
     equipment_dict = equipment_schema.dict(exclude_unset=True)
-    documents = equipment_dict.pop("documents_ids")
-    photo_and_video = equipment_dict.pop("photo_and_video_ids")
+    documents = equipment_dict.pop("documents_ids") if "documents_ids" in equipment_dict else None
+    photo_and_video = equipment_dict.pop("photo_and_video_ids") if "photo_and_video_ids" in equipment_dict else None
 
     await equipment.update_from_dict(equipment_dict)
 
@@ -62,11 +62,13 @@ async def update_equipment(equipment: Equipment, equipment_schema: EquipmentUpda
         host_not_set = Q(host_id__isnull=True)
         host_is_equipment = Q(host=equipment)
 
-        await EquipmentDocument.filter(host_not_set, id__in=documents).update(host=equipment)
-        await EquipmentDocument.filter(host_is_equipment, id__not_in=documents).delete()
+        if documents is not None:
+            await EquipmentDocument.filter(host_not_set, id__in=documents).update(host=equipment)
+            await EquipmentDocument.filter(host_is_equipment, id__not_in=documents).delete()
 
-        await EquipmentMedia.filter(host_not_set, id__in=photo_and_video).update(host=equipment)
-        await EquipmentMedia.filter(host_is_equipment, id__not_in=photo_and_video).delete()
+        if photo_and_video is not None:
+            await EquipmentMedia.filter(host_not_set, id__in=photo_and_video).update(host=equipment)
+            await EquipmentMedia.filter(host_is_equipment, id__not_in=photo_and_video).delete()
 
     except Exception as e:
         log.error(f"Error while updating equipment {equipment.id} with documents and media: {e}")
