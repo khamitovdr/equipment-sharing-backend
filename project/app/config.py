@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     environment: str = "dev"
     testing: bool = False
     database_url: AnyUrl = None
+    static_dir: str = "static/"
     secret_key: str = None
     dadata_token: str = None
 

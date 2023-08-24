@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app import scheduler
 from app.api import equipment, notifications, orders, organizations, token, users
+from app.config import get_settings
 from app.db import init_db
 from app.db_signals import files_signals, orders_signals  # noqa: F401
 
@@ -21,7 +22,7 @@ def create_application() -> FastAPI:
     application.include_router(orders.router, prefix="/orders", tags=["orders"])
     application.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
 
-    application.mount("/static", StaticFiles(directory="static"), name="static")
+    application.mount("/static", StaticFiles(directory=get_settings().static_dir), name="static")
 
     return application
 

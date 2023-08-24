@@ -8,8 +8,9 @@ from fastapi import UploadFile
 from PIL import Image
 
 from app.models.files import FileBaseModel
+from app.config import get_settings
 
-UPLOAD_DIR = "static/"
+UPLOAD_DIR = get_settings().static_dir
 
 log = logging.getLogger("uvicorn")
 
