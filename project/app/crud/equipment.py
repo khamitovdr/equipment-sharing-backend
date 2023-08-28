@@ -55,8 +55,8 @@ async def update_equipment(equipment: Equipment, equipment_schema: EquipmentUpda
     equipment_dict = equipment_schema.dict(exclude_unset=True)
     documents = equipment_dict.pop("documents_ids") if "documents_ids" in equipment_dict else None
     photo_and_video = equipment_dict.pop("photo_and_video_ids") if "photo_and_video_ids" in equipment_dict else None
-
-    await equipment.update_from_dict(equipment_dict)
+    equipment = await equipment.update_from_dict(equipment_dict)
+    await equipment.save()
 
     try:
         host_not_set = Q(host_id__isnull=True)
@@ -74,7 +74,7 @@ async def update_equipment(equipment: Equipment, equipment_schema: EquipmentUpda
         log.error(f"Error while updating equipment {equipment.id} with documents and media: {e}")
         raise e
 
-    await equipment.refresh_from_db()
+    await equipment.fetch_related("organization", "category", "documents", "photo_and_video")
     return equipment
 
 
