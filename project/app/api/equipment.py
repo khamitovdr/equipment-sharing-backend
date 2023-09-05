@@ -9,6 +9,7 @@ from app.crud.equipment import (
     get_equipment_by_id,
     get_equipment_categories,
     get_equipment_list,
+    get_equipment_list_added_by_user,
     update_equipment,
     update_equipment_status,
 )
@@ -31,7 +32,7 @@ from app.schemas.equipment import (
 )
 from app.schemas.files import FileBaseSchema
 from app.services.auth import get_current_active_user
-from app.services.organizations import get_current_verified_organization
+from app.services.organizations import get_current_organization, get_current_verified_organization
 
 log = logging.getLogger("uvicorn")
 
@@ -43,7 +44,7 @@ router = APIRouter()
 async def create_equipment_(
     create_schema: EquipmentCreateSchema,
     current_user: User = Depends(get_current_active_user),
-    organization: Organization = Depends(get_current_verified_organization),
+    organization: Organization = Depends(get_current_organization),
 ):
     """Create new equipment item for current organization"""
     try:
@@ -59,13 +60,17 @@ async def create_equipment_(
 async def update_equipment_(
     equipment_id: int,
     update_schema: EquipmentUpdateSchema,
-    organization: Organization = Depends(get_current_verified_organization),
+    current_user: User = Depends(get_current_active_user),
+    organization: Organization = Depends(get_current_organization),
 ):
     """Update equipment item"""
     equipment = await get_equipment_by_id(equipment_id)
     if not equipment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Equipment not found")
-    if equipment.organization != organization:
+    if (
+            equipment.organization != organization or
+            not current_user.is_verified_organization_member and equipment.added_by != current_user
+        ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission to update equipment"
         )
@@ -145,12 +150,17 @@ async def get_equipment_list_(
 
 @router.get("/my-organization/", response_model=EquipmentListSchema)
 async def get_organization_equipment_list_(
-    organization: Organization = Depends(get_current_verified_organization),
+    current_user: User = Depends(get_current_active_user),
+    organization: Organization = Depends(get_current_organization),
     offset: int = 0,
     limit: int = 40,
 ):
     """Get list of equipment of current organization"""
-    equipment_list = await get_equipment_list(organization.inn, offset=offset, limit=limit)
+    if current_user.is_verified_organization_member:
+        equipment_list = await get_equipment_list(organization.inn, offset=offset, limit=limit)
+    else:
+        equipment_list = await get_equipment_list_added_by_user(current_user, offset=offset, limit=limit)
+        
     return equipment_list
 
 

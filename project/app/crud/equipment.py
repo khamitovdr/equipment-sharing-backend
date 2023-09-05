@@ -119,6 +119,21 @@ async def get_equipment_list(
     )
 
 
+async def get_equipment_list_added_by_user(user: User, offset: int = 0, limit: int = 40) -> list[Equipment]:
+    return (
+        await Equipment.filter(added_by=user)
+        .prefetch_related(
+            "organization",
+            "category",
+            "photo_and_video",
+        )
+        .order_by("-updated_at")
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+
 async def get_equipment_categories(organization_inn: str = None) -> list[EquipmentCategory]:
     filtering_params = {}
     if organization_inn:

@@ -77,17 +77,31 @@ async def get_organization_data_by_code(query: str) -> DadataResponseSchema:
     )
 
 
-async def get_current_verified_organization(
-    current_user: Annotated[User, Depends(get_current_active_user)]
+async def get_current_organization(
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ) -> Organization:
-    """Returns current user's organization if it's verified"""
-    log.info("Getting current user's verified organization...")
-    if current_user.organization is None or not current_user.is_verified_organization_member:
-        log.error("Current user doesn't have an verified organization")
+    """Returns current user's organization"""
+    log.info("Getting current user's organization...")
+    if current_user.organization is None:
+        log.error("Current user doesn't have an organization")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Current user doesn't have an verified organization",
+            detail="Current user doesn't have an organization",
         )
     organization = await current_user.organization
-    log.info(f"Current user's verified organization {organization.inn} received successfully")
+    log.info(f"Current user's organization {organization.inn} received successfully")
+    return organization
+
+
+async def get_current_verified_organization(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    organization: Annotated[Organization, Depends(get_current_organization)],
+) -> Organization:
+    """Returns current user's organization if it's verified"""
+    if not current_user.is_verified_organization_member:
+        log.error("Current user's organization is not verified")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Current user's organization is not verified",
+        )
     return organization
