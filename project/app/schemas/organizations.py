@@ -1,6 +1,7 @@
 from datetime import date
+from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Json
 from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
 from app import _init_models  # noqa: F401
@@ -18,6 +19,10 @@ class DadataResponseSchema(BaseModel):
     legal_address: str
     manager_name: str
     main_activity: str
+
+
+class RequisitesUpdateSchema(BaseModel):
+    dadata_response: Json[Any]
 
 
 OrganizationSchema = pydantic_model_creator(Organization, name="OrganizationSchema")

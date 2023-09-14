@@ -5,7 +5,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
 
 from app import scheduler
-from app.api import equipment, notifications, orders, organizations, token, users
+from app.api import equipment, notifications, orders, organizations, token, users, reviews
 from app.config import get_settings
 from app.db import init_db
 from app.db_signals import files_signals, orders_signals  # noqa: F401
@@ -21,6 +21,7 @@ def create_application() -> FastAPI:
     application.include_router(equipment.router, prefix="/equipment", tags=["equipment"])
     application.include_router(orders.router, prefix="/orders", tags=["orders"])
     application.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
+    application.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
 
     application.mount("/static", StaticFiles(directory=get_settings().static_dir), name="static")
 

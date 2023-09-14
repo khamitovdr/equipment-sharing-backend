@@ -1,12 +1,14 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.crud.organizations import get_organization_by_inn
 from app.models.users import User
-from app.schemas.organizations import OrganizationSchema
+from app.models.organizations import Organization
+from app.schemas.organizations import OrganizationSchema, RequisitesUpdateSchema
 from app.services.auth import get_current_active_user
+from app.services.organizations import get_current_verified_organization
 
 log = logging.getLogger("uvicorn")
 
@@ -29,3 +31,14 @@ async def read_organization(inn: str):
     if organization is None:
         raise HTTPException(status_code=404, detail="Organization not found")
     return organization
+
+
+@router.put("/requisites/", status_code=status.HTTP_202_ACCEPTED)
+async def update_organization_requisites(
+    requisites: RequisitesUpdateSchema, 
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Update organization requisites"""
+    if not requisites.dadata_response:
+        raise HTTPException(status_code=400, detail="Dadata response is required")
+    return {"detail": "Organization requisites updated"}
