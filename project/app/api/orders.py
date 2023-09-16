@@ -24,6 +24,7 @@ from app.schemas.orders import (
 )
 from app.services.auth import get_current_active_user
 from app.services.organizations import get_current_verified_organization
+from app.services.payments import create_payment_link
 
 log = logging.getLogger("uvicorn")
 
@@ -120,3 +121,18 @@ async def respond_to_order_(
     response = OrderStatus(response.value)
     order = await respond_to_order(order, response)
     return order
+
+
+@router.get("/get-payment-link/{order_id}/")
+async def get_payment_link_(order_id: int, return_url: str, current_user: User = Depends(get_current_active_user)):
+    """Get payment link for order"""
+    order = await get_order_by_id(order_id)
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    if order.requester != current_user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+    if order.status != OrderStatus.WAITING_FOR_PAYMENT:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order is not waiting for payment")
+
+    link = create_payment_link(order.total_cost(), f"Оплата заказа №{order.id}", return_url)
+    return {"paymentLink": link}

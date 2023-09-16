@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     static_dir: str = "static/"
     secret_key: str = None
     dadata_token: str = None
+    yookassa_shop_id: str = None
+    yookassa_secret_key: str = None
 
 
 @lru_cache()
