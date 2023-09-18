@@ -1,0 +1,13 @@
+version: '3.4'
+services:
+  app:
+    build:
+      context: .
+    container_name: equipment_db
+    env_file:
+      - .env
+    ports:
+      - "${APPLICATION_PORT}:${APPLICATION_PORT}"
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
