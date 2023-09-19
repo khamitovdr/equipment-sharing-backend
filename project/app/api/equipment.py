@@ -160,7 +160,18 @@ async def get_organization_equipment_list_(
         equipment_list = await get_equipment_list(organization.inn, offset=offset, limit=limit)
     else:
         equipment_list = await get_equipment_list_added_by_user(current_user, offset=offset, limit=limit)
-        
+
+    return equipment_list
+
+
+@router.get("/me/", response_model=EquipmentListSchema)
+async def get_organization_equipment_list_(
+    current_user: User = Depends(get_current_active_user),
+    offset: int = 0,
+    limit: int = 40,
+):
+    """Get list of equipment added by current user"""
+    equipment_list = await get_equipment_list_added_by_user(current_user, offset=offset, limit=limit)
     return equipment_list
 
 
