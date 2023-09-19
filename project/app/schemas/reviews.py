@@ -1,8 +1,5 @@
-import re
-from typing import Any
-
-from pydantic import BaseModel, Json
+from pydantic import BaseModel
 
 
 class ReviewCreateSchema(BaseModel):
-    form_data: Json[Any]
+    form_data: list[dict]
