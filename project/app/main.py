@@ -5,7 +5,15 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
 
 from app import scheduler
-from app.api import equipment, notifications, orders, organizations, token, users, reviews
+from app.api import (
+    equipment,
+    notifications,
+    orders,
+    organizations,
+    reviews,
+    token,
+    users,
+)
 from app.config import get_settings
 from app.db import init_db
 from app.db_signals import files_signals, orders_signals  # noqa: F401

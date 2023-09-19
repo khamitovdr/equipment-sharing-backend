@@ -2,12 +2,11 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.models.users import User
-from app.services.auth import get_current_active_user
-from app.schemas.reviews import ReviewCreateSchema
-from app.crud.reviews import compute_nps, compute_csi, create_nps_csi_review
 from app.crud.orders import get_order_by_id
-
+from app.crud.reviews import compute_csi, compute_nps, create_nps_csi_review
+from app.models.users import User
+from app.schemas.reviews import ReviewCreateSchema
+from app.services.auth import get_current_active_user
 
 log = logging.getLogger("uvicorn")
 
@@ -16,7 +15,9 @@ router = APIRouter()
 
 
 @router.post("/renter/{order_id}/", status_code=status.HTTP_201_CREATED)
-async def create_renter_review(order_id: int, review: ReviewCreateSchema, user: User = Depends(get_current_active_user)):
+async def create_renter_review(
+    order_id: int, review: ReviewCreateSchema, user: User = Depends(get_current_active_user)
+):
     """Create renter review."""
     if not review.form_data:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Form data is required")

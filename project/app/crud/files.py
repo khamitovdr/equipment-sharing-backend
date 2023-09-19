@@ -7,8 +7,8 @@ from typing import Type
 from fastapi import UploadFile
 from PIL import Image
 
-from app.models.files import FileBaseModel
 from app.config import get_settings
+from app.models.files import FileBaseModel
 
 UPLOAD_DIR = get_settings().static_dir
 

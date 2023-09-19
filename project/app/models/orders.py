@@ -49,6 +49,7 @@ class Order(models.Model):
             cost = price * n_days / 365
 
         return round(cost, 2)
+
     class PydanticMeta:
         backward_relations = False
         computed = ["total_cost"]

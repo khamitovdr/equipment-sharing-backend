@@ -1,7 +1,6 @@
-from app.models.users import User
 from app.models.orders import Order
 from app.models.reviews import NPS_CSI_Review
-
+from app.models.users import User
 
 CSI_FACTORS = {
     1: "location_availability",
@@ -24,7 +23,6 @@ for i in range(1, 12):
 
 
 async def create_nps_csi_review(order: Order, user: User, review: list) -> NPS_CSI_Review:
-
     answers = {}
     for item in review:
         key, val = item["question"], item["answer"]
@@ -47,12 +45,10 @@ async def compute_nps() -> float:
 
 
 async def compute_csi() -> float:
-
     from statistics import mean
 
     reviews = await NPS_CSI_Review.all().values_list(
-        *[f"{x}_importance" for x in CSI_FACTORS.values()],
-        *[f"{x}_satisfaction" for x in CSI_FACTORS.values()]
+        *[f"{x}_importance" for x in CSI_FACTORS.values()], *[f"{x}_satisfaction" for x in CSI_FACTORS.values()]
     )
     reviews_means = list(map(mean, zip(*reviews)))
     n = len(CSI_FACTORS)

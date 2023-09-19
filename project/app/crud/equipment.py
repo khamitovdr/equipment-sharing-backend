@@ -41,8 +41,10 @@ async def create_equipment(
 
     try:
         host_not_set = Q(host_id__isnull=True)
-        if documents is not None: await EquipmentDocument.filter(host_not_set, id__in=documents).update(host=equipment)
-        if photo_and_video is not None: await EquipmentMedia.filter(host_not_set, id__in=photo_and_video).update(host=equipment)
+        if documents is not None:
+            await EquipmentDocument.filter(host_not_set, id__in=documents).update(host=equipment)
+        if photo_and_video is not None:
+            await EquipmentMedia.filter(host_not_set, id__in=photo_and_video).update(host=equipment)
     except Exception as e:
         log.error(f"Error while updating equipment {equipment.id} with documents and media: {e}")
         await equipment.delete()

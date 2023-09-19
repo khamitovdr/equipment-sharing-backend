@@ -32,7 +32,10 @@ from app.schemas.equipment import (
 )
 from app.schemas.files import FileBaseSchema
 from app.services.auth import get_current_active_user
-from app.services.organizations import get_current_organization, get_current_verified_organization
+from app.services.organizations import (
+    get_current_organization,
+    get_current_verified_organization,
+)
 
 log = logging.getLogger("uvicorn")
 
@@ -68,9 +71,10 @@ async def update_equipment_(
     if not equipment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Equipment not found")
     if (
-            equipment.organization != organization or
-            not current_user.is_verified_organization_member and equipment.added_by != current_user
-        ):
+        equipment.organization != organization
+        or not current_user.is_verified_organization_member
+        and equipment.added_by != current_user
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission to update equipment"
         )
@@ -165,7 +169,7 @@ async def get_organization_equipment_list_(
 
 
 @router.get("/me/", response_model=EquipmentListSchema)
-async def get_organization_equipment_list_(
+async def get_user_equipment_list_(
     current_user: User = Depends(get_current_active_user),
     offset: int = 0,
     limit: int = 40,

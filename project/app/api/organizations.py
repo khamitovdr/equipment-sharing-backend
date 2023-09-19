@@ -4,8 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.crud.organizations import get_organization_by_inn
-from app.models.users import User
 from app.models.organizations import Organization
+from app.models.users import User
 from app.schemas.organizations import OrganizationSchema, RequisitesUpdateSchema
 from app.services.auth import get_current_active_user
 from app.services.organizations import get_current_verified_organization
@@ -35,7 +35,7 @@ async def read_organization(inn: str):
 
 @router.put("/requisites/", status_code=status.HTTP_202_ACCEPTED)
 async def update_organization_requisites(
-    requisites: RequisitesUpdateSchema, 
+    requisites: RequisitesUpdateSchema,
     organization: Organization = Depends(get_current_verified_organization),
 ):
     """Update organization requisites"""
