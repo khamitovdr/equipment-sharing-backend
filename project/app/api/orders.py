@@ -136,3 +136,15 @@ async def get_payment_link_(order_id: int, return_url: str, current_user: User =
 
     link = create_payment_link(order.total_cost(), f"Оплата заказа №{order.id}", return_url)
     return {"paymentLink": link}
+
+
+@router.patch("/{order_id}/set-waiting-for-payment/", response_model=OrderSchema)
+async def set_waiting_payment(order_id: int):
+    order = await get_order_by_id(order_id)
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    order.status = OrderStatus.WAITING_FOR_PAYMENT
+    await order.save()
+
+    return order
+    
