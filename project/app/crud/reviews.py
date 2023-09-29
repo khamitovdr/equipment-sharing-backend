@@ -26,7 +26,10 @@ async def create_nps_csi_review(order: Order, user: User, review: list) -> NPS_C
     answers = {}
     for item in review:
         key, val = item["question"], item["answer"]
-        answers[FORM_MAPPING[key]] = val
+        try:
+            answers[FORM_MAPPING[key]] = val
+        except KeyError:
+            pass
 
     print(answers)
 
