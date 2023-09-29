@@ -3,10 +3,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.crud.organizations import get_organization_by_inn
+from app.crud.organizations import get_organization_by_inn, update_organization_requisites
 from app.models.organizations import Organization
 from app.models.users import User
-from app.schemas.organizations import OrganizationSchema, RequisitesUpdateSchema
+from app.schemas.organizations import OrganizationSchema
+from app.schemas.requisites import RequisitesUpdateSchema, RequisitesSchema
 from app.services.auth import get_current_active_user
 from app.services.organizations import get_current_verified_organization
 
@@ -18,7 +19,7 @@ router = APIRouter()
 @router.get("/my-organization/", response_model=OrganizationSchema)
 async def read_organization_me(current_user: Annotated[User, Depends(get_current_active_user)]):
     """Get current user organization"""
-    await current_user.fetch_related("organization")
+    await current_user.fetch_related("organization__requisites")
     if current_user.organization is None:
         raise HTTPException(status_code=404, detail="Organization not found")
     return current_user.organization
@@ -33,12 +34,11 @@ async def read_organization(inn: str):
     return organization
 
 
-@router.put("/requisites/", status_code=status.HTTP_202_ACCEPTED)
-async def update_organization_requisites(
-    requisites: RequisitesUpdateSchema,
+@router.put("/requisites/", status_code=status.HTTP_202_ACCEPTED, response_model=RequisitesSchema)
+async def update_organization_requisites_(
+    requisites_schema: RequisitesUpdateSchema,
     organization: Organization = Depends(get_current_verified_organization),
 ):
     """Update organization requisites"""
-    if not requisites.dadata_response:
-        raise HTTPException(status_code=400, detail="Dadata response is required")
-    return {"detail": "Organization requisites updated"}
+    requisites = await update_organization_requisites(organization, requisites_schema)
+    return requisites

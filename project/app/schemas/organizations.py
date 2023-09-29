@@ -20,11 +20,7 @@ class DadataResponseSchema(BaseModel):
     main_activity: str
 
 
-class RequisitesUpdateSchema(BaseModel):
-    dadata_response: dict
-
-
 OrganizationSchema = pydantic_model_creator(Organization, name="OrganizationSchema")
 OrganizationListSchema = pydantic_queryset_creator(
-    Organization, exclude=("ogrn", "kpp", "authorized_capital_k_rubles")
+    Organization, exclude=("ogrn", "kpp", "authorized_capital_k_rubles", "requisites")
 )

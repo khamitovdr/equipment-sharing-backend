@@ -14,4 +14,4 @@ class Organization(models.Model):
     main_activity = fields.CharField(max_length=15)
 
     class PydanticMeta:
-        backward_relations = False
+        exclude = ("users", "equipment", "notifications")

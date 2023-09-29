@@ -21,5 +21,16 @@ class User(models.Model):
         return self.email  # pragma: no cover
 
     class PydanticMeta:
-        backward_relations = False
-        exclude = ["hashed_password", "is_admin", "created_at", "organization"]
+        # backward_relations = False
+        # exclude = ["hashed_password", "is_admin", "created_at", "organization"]
+        include = [
+            "id",
+            "email",
+            "is_owner",
+            "phone",
+            "full_name",
+            "disabled",
+            "is_verified_organization_member",
+            "organization_inn",
+            "requisites",
+        ]

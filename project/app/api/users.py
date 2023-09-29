@@ -9,6 +9,7 @@ from app.crud.users import (
     get_user_by_id,
     get_users,
     update_user,
+    update_user_requisites,
 )
 from app.models.users import User
 from app.schemas.users import (
@@ -17,6 +18,7 @@ from app.schemas.users import (
     UserSchema,
     UserUpdateSchema,
 )
+from app.schemas.requisites import RequisitesSchema, RequisitesUpdateSchema
 from app.services.auth import (
     CREDENTIALS_EXCEPTION,
     authenticate_user,
@@ -90,3 +92,13 @@ async def read_users(offset: int = 0, limit: int = 100):
     """Get list of all users"""
     users = await get_users(offset, limit)
     return users
+
+
+@router.put("/requisites/", status_code=status.HTTP_202_ACCEPTED, response_model=RequisitesSchema)
+async def update_user_requisites_(
+    requisites_schema: RequisitesUpdateSchema,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    """Update user requisites"""
+    requisites = await update_user_requisites(current_user, requisites_schema)
+    return requisites

@@ -69,4 +69,4 @@ class UserUpdateSchema(UserCreateSchema):
 # "name" argument is critical for correct work of pydantic_model_creator!
 # See https://github.com/tortoise/tortoise-orm/issues/647
 UserSchema = pydantic_model_creator(User, name="UserSchema")
-UserListSchema = pydantic_queryset_creator(User)
+UserListSchema = pydantic_queryset_creator(User, exclude=("requisites",))
