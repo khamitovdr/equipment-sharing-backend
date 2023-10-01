@@ -12,7 +12,6 @@ class Settings(BaseSettings):
     database_url: AnyUrl = None
     static_dir: str = "static/"
     secret_key: str = None
-    dadata_token: str = None
     yookassa_shop_id: str = None
     yookassa_secret_key: str = None
 

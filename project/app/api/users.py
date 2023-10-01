@@ -55,8 +55,8 @@ async def create_new_user(user_schema: UserCreateSchema):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User with this email already exists")
 
     user_schema.password = get_password_hash(user_schema.password)
-    if user_schema.organization_inn:
-        organization = await get_or_create_organization_by_inn(user_schema.organization_inn)
+    if user_schema.organization_data:
+        organization = await get_or_create_organization_by_inn(user_schema.organization_data)
     else:
         organization = None
 
@@ -76,10 +76,10 @@ async def update_current_user(
         user_schema.new_password = None
 
     await current_user.fetch_related("organization")
-    if user_schema.organization_inn and (
-        current_user.organization is None or user_schema.organization_inn != current_user.organization.inn
+    if user_schema.organization_data and (
+        current_user.organization is None or user_schema.organization_data["data"]["inn"] != current_user.organization.inn
     ):
-        organization = await get_or_create_organization_by_inn(user_schema.organization_inn)
+        organization = await get_or_create_organization_by_inn(user_schema.organization_data)
     else:
         organization = None
 
