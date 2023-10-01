@@ -21,6 +21,8 @@ async def create_order(equipment: Equipment, requester: User, order_schema: Orde
         start_date=order_schema.start_date,
         end_date=order_schema.end_date,
     )
+    order.cost = order.total_cost()
+    await order.save(update_fields=["cost"])
     log.info(f"Order created: {order.id}")
     await order.fetch_related(
         "equipment__category",

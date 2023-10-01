@@ -25,6 +25,7 @@ from app.schemas.orders import (
 from app.services.auth import get_current_active_user
 from app.services.organizations import get_current_verified_organization
 from app.services.payments import create_payment_link
+from app.services.documents import get_contract_template
 
 log = logging.getLogger("uvicorn")
 
@@ -123,6 +124,22 @@ async def respond_to_order_(
     return order
 
 
+@router.get("/{order_id}/contract-template/")
+async def get_contract_template_(order_id: int, current_user: User = Depends(get_current_active_user)):
+    order = await get_order_by_id(order_id)
+    user_organization = await current_user.organization
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    if not (
+        (order.requester == current_user or await order.requester.organization == user_organization) or
+        (current_user.is_verified_organization_member and await order.equipment.organization == user_organization)
+        ):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+
+    download_link = await get_contract_template("Москва", order)
+    return {"downloadLink": download_link}
+
+
 @router.get("/get-payment-link/{order_id}/")
 async def get_payment_link_(order_id: int, return_url: str, current_user: User = Depends(get_current_active_user)):
     """Get payment link for order"""
@@ -147,4 +164,3 @@ async def set_waiting_payment(order_id: int):
     await order.save()
 
     return order
-    
