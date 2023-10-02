@@ -8,16 +8,16 @@ from app.models.organizations import Organization
 
 
 class DadataResponseSchema(BaseModel):
-    short_name: str
-    full_name: str
-    ogrn: str
+    short_name: str or None = None
+    full_name: str or None = None
+    ogrn: str or None = None
     inn: str
-    kpp: str
-    registration_date: date
-    # authorized_capital_k_rubles: int
-    legal_address: str
-    manager_name: str
-    main_activity: str
+    kpp: str or None = None
+    registration_date: date or None = None
+    # authorized_capital_k_rubles: int or None = None
+    legal_address: str or None = None
+    manager_name: str or None = None
+    main_activity: str or None = None
 
 
 OrganizationSchema = pydantic_model_creator(Organization, name="OrganizationSchema")
