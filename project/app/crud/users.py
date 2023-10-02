@@ -50,7 +50,7 @@ async def get_users(offset: int = 0, limit: int = 40) -> list[User]:
 
 async def update_user_requisites(user: User, requisites_schema: RequisitesUpdateSchema) -> Requisites:
     log.info(f"Adding requisites to user with email {user.email} in DB...")
-    requisites = await user.requisites
+    requisites = user.requisites
     if requisites is None:
         requisites = Requisites(user=user)
 
