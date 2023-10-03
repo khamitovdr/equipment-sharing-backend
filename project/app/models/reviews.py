@@ -1,23 +1,31 @@
 from tortoise import fields, models
 
+from app.models.orders import Order
+from app.models.users import User
+
 
 class Review(models.Model):
     rating = fields.IntField()
     comment = fields.TextField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
+    added_by: fields.ForeignKeyRelation[User]
+    order: fields.OneToOneRelation[Order]
 
     class Meta:
         abstract = True
 
     class PydanticMeta:
         backward_relations = False
+        exclude = ["order", "added_by"]
 
 
 class OwnerReview(Review):
+    added_by = fields.ForeignKeyField("models.User", related_name="reviews_as_owner")
     order = fields.OneToOneField("models.Order", related_name="owner_review")
 
 
 class RenterReview(Review):
+    added_by = fields.ForeignKeyField("models.User", related_name="reviews_as_renter")
     order = fields.OneToOneField("models.Order", related_name="renter_review")
 
 

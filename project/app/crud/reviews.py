@@ -1,6 +1,33 @@
 from app.models.orders import Order
-from app.models.reviews import NPS_CSI_Review
+from app.models.reviews import NPS_CSI_Review, OwnerReview, RenterReview, Review
 from app.models.users import User
+from app.schemas.reviews import ReviewCreateSchema
+
+
+async def create_or_update_review(order: Order, user: User, review: ReviewCreateSchema, from_: str) -> Review:
+    params = {
+        "order": order,
+        "added_by": user,
+        "rating": review.rating,
+        "comment": review.comment,
+    }
+    if from_ == "owner":
+        review_class = OwnerReview
+        review = await order.owner_review
+    elif from_ == "renter":
+        review_class = RenterReview
+        review = await order.renter_review
+    else:
+        raise ValueError(f"Unknown review type: {from_}")
+
+    if review is None:
+        review = await review_class.create(**params)
+    else:
+        await review.update_from_dict(params)
+        await review.save()
+        
+    return review
+
 
 CSI_FACTORS = {
     1: "location_availability",
@@ -22,7 +49,7 @@ for i in range(1, 12):
     FORM_MAPPING[f"questionTwo{i}_satisfaction"] = f"{CSI_FACTORS[i]}_satisfaction"
 
 
-async def create_nps_csi_review(order: Order, user: User, review: list) -> NPS_CSI_Review:
+async def create_nps_csi_feedback(order: Order, user: User, review: list) -> NPS_CSI_Review:
     answers = {}
     for item in review:
         key, val = item["question"], item["answer"]
