@@ -35,6 +35,9 @@ class Order(models.Model):
     updated_at = fields.DatetimeField(auto_now=True)
     status = fields.CharEnumField(OrderStatus, default=OrderStatus.CREATED)
 
+    cost = fields.FloatField(null=True)
+    payment_id = fields.CharField(max_length=255, null=True)
+
     def total_cost(self) -> float:
         price = self.equipment.price
         time_interval = self.equipment.time_interval
