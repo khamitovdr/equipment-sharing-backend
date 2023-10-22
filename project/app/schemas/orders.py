@@ -20,3 +20,8 @@ class OrderUpdateSchema(BaseModel):
 
 OrderSchema = pydantic_model_creator(Order, name="OrderSchema")
 OrderListSchema = pydantic_queryset_creator(Order)
+
+
+class ChatCredentialsSchema(BaseModel):
+    username: str
+    user_secret: str

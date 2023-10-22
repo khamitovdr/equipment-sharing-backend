@@ -21,7 +21,9 @@ from app.schemas.orders import (
     OrderListSchema,
     OrderSchema,
     OrderUpdateSchema,
+    ChatCredentialsSchema,
 )
+from app.services.orders import get_user_secret
 from app.services.auth import get_current_active_user
 from app.services.organizations import get_current_verified_organization
 from app.services.payments import create_payment_link
@@ -42,6 +44,25 @@ async def get_outgoing_orders_(
     """Get outgoing orders for current user"""
     return await get_user_orders(current_user, offset=offset, limit=limit)
 
+
+@router.get("/{order_id}/chat-credentials", response_model=ChatCredentialsSchema)
+async def get_order_(order_id: int, current_user: User = Depends(get_current_active_user)):
+    """Get order by id"""
+    order = await get_order_by_id(order_id)
+    user_organization = await current_user.organization
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    if not (
+        (order.requester == current_user or await order.requester.organization == user_organization) or
+        (current_user.is_verified_organization_member and await order.equipment.organization == user_organization)
+        ):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+    
+    return ChatCredentialsSchema(
+        username=f"order-{order.id}_user-{current_user.id}",
+        user_secret=get_user_secret(order.id, current_user.id, current_user.hashed_password),
+    )
+        
 
 @router.get("/requests/", response_model=OrderListSchema)
 async def get_requests_(
