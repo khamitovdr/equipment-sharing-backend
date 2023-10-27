@@ -25,3 +25,4 @@ OrderListSchema = pydantic_queryset_creator(Order)
 class ChatCredentialsSchema(BaseModel):
     username: str
     user_secret: str
+    interlocutor_username: str
