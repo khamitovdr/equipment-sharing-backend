@@ -172,7 +172,7 @@ async def get_payment_link_(order_id: int, return_url: str, current_user: User =
     if order.status != OrderStatus.WAITING_FOR_PAYMENT:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order is not waiting for payment")
 
-    link = create_payment_link(order.total_cost(), f"Оплата заказа №{order.id}", return_url)
+    link = create_payment_link(order.cost(), f"Оплата заказа №{order.id}", return_url)
     return {"paymentLink": link}
 
 

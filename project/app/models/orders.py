@@ -39,7 +39,7 @@ class Order(models.Model):
     cost = fields.FloatField(null=True)
     payment_id = fields.CharField(max_length=255, null=True)
 
-    def total_cost(self) -> float:
+    def estimated_cost(self) -> float:
         price = self.equipment.price
         time_interval = self.equipment.time_interval
         n_days = (self.end_date - self.start_date).days + 1
@@ -56,4 +56,3 @@ class Order(models.Model):
 
     class PydanticMeta:
         backward_relations = False
-        computed = ["total_cost"]
