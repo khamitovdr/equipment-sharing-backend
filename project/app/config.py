@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     secret_key: str = None
     yookassa_shop_id: str = None
     yookassa_secret_key: str = None
+    sentry_dsn: str = None
 
 
 @lru_cache()

@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
+import sentry_sdk
 
 from app import scheduler
 from app.api import (
@@ -20,6 +21,17 @@ from app.db_signals import files_signals, orders_signals  # noqa: F401
 
 log = logging.getLogger("uvicorn")
 
+sentry_sdk.init(
+    dsn=get_settings().sentry_dsn,
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+    send_default_pii=True # send user data (id, email, ip, etc.)
+)
 
 def create_application() -> FastAPI:
     application = FastAPI(title="Equipment sharing service")
