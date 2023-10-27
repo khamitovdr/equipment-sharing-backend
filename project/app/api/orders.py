@@ -9,11 +9,11 @@ from app.crud.orders import (
     get_order_by_id,
     get_organization_orders,
     get_user_orders,
-    respond_to_order,
+    # respond_to_order,
     update_order,
 )
 from app.models.equipment import EquipmentStatus
-from app.models.orders import OrderResponseStatus, OrderStatus
+from app.models.orders import OrderStatus
 from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.orders import (
@@ -127,22 +127,22 @@ async def cancel_order_(order_id: int, current_user: User = Depends(get_current_
     return order
 
 
-@router.put("/{order_id}/reply/", response_model=OrderSchema)
-async def respond_to_order_(
-    order_id: int,
-    response: OrderResponseStatus,
-    organization: Organization = Depends(get_current_verified_organization),
-):
-    """Respond to incoming order"""
-    order = await get_order_by_id(order_id)
-    if order is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-    if await order.equipment.organization != organization:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+# @router.put("/{order_id}/reply/", response_model=OrderSchema)
+# async def respond_to_order_(
+#     order_id: int,
+#     response: OrderResponseStatus,
+#     organization: Organization = Depends(get_current_verified_organization),
+# ):
+#     """Respond to incoming order"""
+#     order = await get_order_by_id(order_id)
+#     if order is None:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+#     if await order.equipment.organization != organization:
+#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
-    response = OrderStatus(response.value)
-    order = await respond_to_order(order, response)
-    return order
+#     response = OrderStatus(response.value)
+#     order = await respond_to_order(order, response)
+#     return order
 
 
 @router.get("/{order_id}/contract-template/")

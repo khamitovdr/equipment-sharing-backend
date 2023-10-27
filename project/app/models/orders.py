@@ -6,18 +6,19 @@ from app.models.equipment import TimeInterval
 
 
 class OrderStatus(str, Enum):
-    # Renter statuses
-    CANCELED = "canceled"
-
-    # Owner statuses
-    ACCEPTED = "accepted"
-    REJECTED = "rejected"
-
-    # Common statuses
     CREATED = "created"
+    CANCELED = "canceled"  # canceled by renter
+    REJECTED = "rejected"  # rejected by owner
+    CONTRACT_FORMATION = "contract_formation"
+    CONTRACT_NEGOTIATION = "contract_negotiation"
+    CONTRACT_SIGNING = "contract_signing"
+    CHOOSING_PAYMENT_METHOD = "choosing_payment_method"
     WAITING_FOR_PAYMENT = "waiting_for_payment"
-    PAID = "paid"
-    IN_PROGRESS = "in_progress"
+    ACCEPTANCE_BY_RENTER = "acceptance_by_renter"
+    WAITING_FOR_RENT = "waiting_for_rent"
+    IN_RENT = "in_rent"
+    ACCEPTANCE_BY_OWNER = "acceptance_by_owner"
+    WAITING_FOR_REVIEW = "waiting_for_review"
     FINISHED = "finished"
 
 
