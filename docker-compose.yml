@@ -8,14 +8,7 @@ services:
       - ./project:/usr/src/app
     ports:
       - 8004:8000
-    environment:
-      - ENVIRONMENT=dev
-      - TESTING=0
-      - DATABASE_URL=postgres://postgres:dJw6EYrkDM@web-db:5432/web_dev
-      - DATABASE_TEST_URL=postgres://postgres:dJw6EYrkDM@web-db:5432/web_test
-      - SECRET_KEY=09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
-      - YOOKASSA_SHOP_ID=250502
-      - YOOKASSA_SECRET_KEY=test_mr77Y8qJjhuUeeovDHxZXTzjX2Mh2xmY3kfnKcjv-wc
+    env_file: .env
     depends_on:
       - web-db
   web-db:
@@ -28,8 +21,6 @@ services:
       - 54321:5432
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=dJw6EYrkDM
+    env_file: .env
 volumes:
   postgres-data:
