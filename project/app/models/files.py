@@ -9,8 +9,7 @@ class FileBaseModel(models.Model):
     media_type = fields.CharField(max_length=255)
     media_format = fields.CharField(max_length=255)
     hash = fields.CharField(max_length=255)
-    original_path = fields.CharField(max_length=255)
-    path = fields.JSONField()
+    path = fields.CharField(max_length=255)
     created_at = fields.DatetimeField(auto_now_add=True)
     host: fields.ForeignKeyRelation
 
@@ -20,3 +19,16 @@ class FileBaseModel(models.Model):
     class PydanticMeta:
         backward_relations = False
         exclude = ["created_at", "host", "host_id", "hash"]
+
+
+class UploadedFileBaseModel(FileBaseModel):
+    
+    class Meta:
+        abstract = True
+
+
+class UploadedMediaBaseModel(UploadedFileBaseModel):
+    derived_path = fields.JSONField(null=True)
+
+    class Meta:
+        abstract = True

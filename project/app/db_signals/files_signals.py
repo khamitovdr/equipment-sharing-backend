@@ -6,7 +6,7 @@ from typing import Optional, Type
 from tortoise import BaseDBAsyncClient
 from tortoise.signals import post_save, pre_delete
 
-from app.models.files import FileBaseModel
+from app.models.files import UploadedFileBaseModel, UploadedMediaBaseModel
 from app.scheduler import app as scheduler
 
 log = logging.getLogger("uvicorn")
@@ -17,7 +17,7 @@ UPLOADED_MEDIA_WAITING_TIME_MINUTES = 20
 
 
 @scheduler.task()
-async def delete_file_if_unused(file: FileBaseModel, waiting_time_seconds: int) -> None:
+async def delete_file_if_unused(file: UploadedFileBaseModel, waiting_time_seconds: int) -> None:
     """Delete file if it is not used in any equipment"""
     await sleep(waiting_time_seconds)
     await file.refresh_from_db()
@@ -26,10 +26,10 @@ async def delete_file_if_unused(file: FileBaseModel, waiting_time_seconds: int) 
         await file.delete()
 
 
-@post_save(*FileBaseModel.__subclasses__())
+@post_save(*UploadedFileBaseModel.__subclasses__())
 async def file_post_save(
-    sender: Type[FileBaseModel],
-    file: FileBaseModel,
+    sender: Type[UploadedFileBaseModel],
+    file: UploadedFileBaseModel,
     created: bool,
     using_db: Optional[BaseDBAsyncClient],
     update_fields: list[str],
@@ -41,22 +41,34 @@ async def file_post_save(
         task.run(file=file, waiting_time_seconds=UPLOADED_MEDIA_WAITING_TIME_MINUTES * 60)
 
 
-# on_delete=CASCADE doesn't fire pre_delete and post_delete signals
-# https://github.com/tortoise/tortoise-orm/issues/1447
-@pre_delete(*FileBaseModel.__subclasses__())
+# TODO: Накинуть pre_delete на все модели, которые могут содержать ссылки на файлы
+@pre_delete(*UploadedFileBaseModel.__subclasses__())
 async def file_pre_delete(
-    sender: Type[FileBaseModel],
-    file: FileBaseModel,
+    sender: Type[UploadedFileBaseModel],
+    file: UploadedFileBaseModel,
     using_db: Optional[BaseDBAsyncClient],
 ) -> None:
-    try:
-        if await sender.filter(original_path=file.original_path).count() > 0:
-            log.info(f"Deleting file {file.original_path}")
-            for path in file.path.values():
-                if os.path.exists(path):
-                    os.remove(path)
-                else:
-                    log.warning(f"File {path} doesn't exist")
-    except Exception as e:
-        log.error(f"Error while deleting file {file.path}: {e}")
-        raise e
+    if await sender.filter(path=file.path).count() == 1:
+        log.info(f"Deleting file {file.path}")
+        if os.path.exists(file.path):
+            os.remove(file.path)
+        else:
+            log.warning(f"File {file.path} doesn't exist")
+
+
+@pre_delete(*UploadedMediaBaseModel.__subclasses__())
+async def image_pre_delete(
+    sender: Type[UploadedMediaBaseModel],
+    file: UploadedMediaBaseModel,
+    using_db: Optional[BaseDBAsyncClient],
+) -> None:
+    if file.media_type != "image":
+        return await file_pre_delete(sender, file, using_db)
+
+    if await sender.filter(path=file.path).count() == 1:
+        log.info(f"Deleting photos derived from {file.path}")
+        for path in (file.path, *file.derived_path.values()):
+            if os.path.exists(path):
+                os.remove(path)
+            else:
+                log.warning(f"File {path} doesn't exist")

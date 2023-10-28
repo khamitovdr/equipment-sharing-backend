@@ -13,7 +13,7 @@ from app.crud.equipment import (
     update_equipment,
     update_equipment_status,
 )
-from app.crud.files import create_file, delete_file
+from app.crud.files import create_uploaded_file, delete_file
 from app.models.equipment import (
     EquipmentDocument,
     EquipmentMedia,
@@ -30,7 +30,7 @@ from app.schemas.equipment import (
     EquipmentSchema,
     EquipmentUpdateSchema,
 )
-from app.schemas.files import FileBaseSchema
+from app.schemas.files import FileBaseSchema, MediaBaseSchema
 from app.services.auth import get_current_active_user
 from app.services.organizations import (
     get_current_organization,
@@ -86,13 +86,18 @@ async def update_equipment_(
 @router.delete("/{equipment_id}/")
 async def delete_equipment_(
     equipment_id: int,
-    organization: Organization = Depends(get_current_verified_organization),
+    current_user: User = Depends(get_current_active_user),
+    organization: Organization = Depends(get_current_organization),
 ):
     """Delete equipment item"""
     equipment = await get_equipment_by_id(equipment_id)
     if not equipment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Equipment not found")
-    if equipment.organization != organization:
+    if (
+        equipment.organization != organization
+        or not current_user.is_verified_organization_member
+        and equipment.added_by != current_user
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission to delete equipment"
         )
@@ -103,36 +108,40 @@ async def delete_equipment_(
 @router.post("/document/", response_model=FileBaseSchema)
 async def upload_equipment_document(
     document: UploadFile,
-    organization: Organization = Depends(get_current_verified_organization),
+    current_user: User = Depends(get_current_active_user),
+    organization: Organization = Depends(get_current_organization),
 ):
     """Upload equipment document"""
-    file = await create_file(document, EquipmentDocument)
+    file = await create_uploaded_file(document, EquipmentDocument, allowed_types=["application", "text"])
     return file
 
 
 @router.delete("/document/{document_id}/")
 async def delete_equipment_document(
     document_id: int,
-    organization: Organization = Depends(get_current_verified_organization),
+    current_user: User = Depends(get_current_active_user),
+    organization: Organization = Depends(get_current_organization),
 ):
     """Delete equipment document"""
     await delete_file(document_id, EquipmentDocument)
 
 
-@router.post("/media/", response_model=FileBaseSchema)
+@router.post("/media/", response_model=MediaBaseSchema)
 async def upload_equipment_media(
     media: UploadFile,
-    organization: Organization = Depends(get_current_verified_organization),
+    current_user: User = Depends(get_current_active_user),
+    organization: Organization = Depends(get_current_organization),
 ):
     """Upload equipment media"""
-    file = await create_file(media, EquipmentMedia)
+    file = await create_uploaded_file(media, EquipmentMedia, allowed_types=["image", "video"])
     return file
 
 
 @router.delete("/media/{media_id}/")
 async def delete_equipment_media(
     media_id: int,
-    organization: Organization = Depends(get_current_verified_organization),
+    current_user: User = Depends(get_current_active_user),
+    organization: Organization = Depends(get_current_organization),
 ):
     """Delete equipment media"""
     await delete_file(media_id, EquipmentMedia)

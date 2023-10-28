@@ -2,7 +2,7 @@ from enum import Enum
 
 from tortoise import fields, models
 
-from app.models.files import FileBaseModel
+from app.models.files import UploadedFileBaseModel, UploadedMediaBaseModel
 
 
 class EquipmentStatus(str, Enum):
@@ -41,6 +41,7 @@ class EquipmentCategory(models.Model):
         exclude = ["added_by", "added_by_id", "created_at", "verified"]
 
 
+# TODO: Get rid of this shame
 # For pydantic schema generation
 class EquipmentCategoryWithEquipmentCount(EquipmentCategory):
     equipment_count = fields.IntField()
@@ -49,7 +50,7 @@ class EquipmentCategoryWithEquipmentCount(EquipmentCategory):
         abstract = True
 
 
-class EquipmentMedia(FileBaseModel):
+class EquipmentMedia(UploadedMediaBaseModel):
     SAVE_PATH = "equipment/media/"
 
     host = fields.ForeignKeyField(
@@ -57,7 +58,7 @@ class EquipmentMedia(FileBaseModel):
     )
 
 
-class EquipmentDocument(FileBaseModel):
+class EquipmentDocument(UploadedFileBaseModel):
     SAVE_PATH = "equipment/documents/"
 
     host = fields.ForeignKeyField("models.Equipment", related_name="documents", on_delete=fields.CASCADE, null=True)
