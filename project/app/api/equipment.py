@@ -112,7 +112,7 @@ async def upload_equipment_document(
     organization: Organization = Depends(get_current_organization),
 ):
     """Upload equipment document"""
-    file = await create_uploaded_file(document, EquipmentDocument, allowed_types=["application", "text"])
+    file = await create_uploaded_file(document, EquipmentDocument, current_user, allowed_types=["application", "text"])
     return file
 
 
@@ -133,7 +133,7 @@ async def upload_equipment_media(
     organization: Organization = Depends(get_current_organization),
 ):
     """Upload equipment media"""
-    file = await create_uploaded_file(media, EquipmentMedia, allowed_types=["image", "video"])
+    file = await create_uploaded_file(media, EquipmentMedia, current_user, allowed_types=["image", "video"])
     return file
 
 

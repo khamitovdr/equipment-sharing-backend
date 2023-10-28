@@ -8,6 +8,7 @@ from fastapi import UploadFile, HTTPException, status
 from PIL import Image
 
 from app.config import get_settings
+from app.models.users import User
 from app.models.files import FileBaseModel, UploadedFileBaseModel, UploadedMediaBaseModel
 
 UPLOAD_DIR = get_settings().static_dir
@@ -18,6 +19,7 @@ log = logging.getLogger("uvicorn")
 async def create_uploaded_file(
         file: UploadFile,
         cls: Type[UploadedFileBaseModel],
+        user: User,
         allowed_types: list[str] = None,
         allowed_formats: list[str] = None,
     ) -> UploadedFileBaseModel:
@@ -52,6 +54,7 @@ async def create_uploaded_file(
             media_format=media_format,
             hash=hash,
             path=get_save_path(),
+            added_by=user,
         )
 
     try:

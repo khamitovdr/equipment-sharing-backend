@@ -11,6 +11,7 @@ class FileBaseModel(models.Model):
     hash = fields.CharField(max_length=255)
     path = fields.CharField(max_length=255)
     created_at = fields.DatetimeField(auto_now_add=True)
+    added_by = fields.ForeignKeyField("models.User", on_delete=fields.SET_NULL, null=True)
     host: fields.ForeignKeyRelation
 
     class Meta:
@@ -18,7 +19,7 @@ class FileBaseModel(models.Model):
 
     class PydanticMeta:
         backward_relations = False
-        exclude = ["created_at", "host", "host_id", "hash"]
+        exclude = ["added_by", "created_at", "host", "host_id", "hash"]
 
 
 class UploadedFileBaseModel(FileBaseModel):
