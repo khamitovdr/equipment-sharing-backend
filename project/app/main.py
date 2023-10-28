@@ -18,6 +18,7 @@ from app.api import (
 from app.config import get_settings
 from app.db import init_db
 from app.db_signals import files_signals, orders_signals  # noqa: F401
+from app.services.equipment import init_equipment_categories_db_table
 
 log = logging.getLogger("uvicorn")
 
@@ -56,6 +57,10 @@ async def startup_event():
     log.info("Starting up...")
     init_db(app)
     await scheduler.start()
+
+    session = scheduler.app.session
+    task = session[init_equipment_categories_db_table]
+    task.run()
 
 
 @app.on_event("shutdown")

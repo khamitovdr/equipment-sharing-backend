@@ -233,12 +233,3 @@ async def change_equipment_status(
     status = EquipmentStatus(status.value)
     equipment = await update_equipment_status(equipment, status)
     return equipment
-
-
-@router.get("/fill_equipment_categories_db_table")
-async def init_equipment_categories_db_table_():
-    """Fill new database with activities and equipment categories"""
-    from app.services.equipment import init_equipment_categories_db_table
-
-    await init_equipment_categories_db_table()
-    return {"message": "OK"}
