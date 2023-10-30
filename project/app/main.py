@@ -14,6 +14,8 @@ from app.api import (
     reviews,
     token,
     users,
+    order_process_renter,
+    order_process_owner,
 )
 from app.config import get_settings
 from app.db import init_db
@@ -41,6 +43,8 @@ def create_application() -> FastAPI:
     application.include_router(organizations.router, prefix="/organizations", tags=["organizations"])
     application.include_router(equipment.router, prefix="/equipment", tags=["equipment"])
     application.include_router(orders.router, prefix="/orders", tags=["orders"])
+    application.include_router(order_process_renter.router, prefix="/renter/orders", tags=["order renter process"])
+    application.include_router(order_process_owner.router, prefix="/owner/orders", tags=["order owner process"])
     application.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
     application.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
 

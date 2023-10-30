@@ -1,5 +1,8 @@
 import logging
 from datetime import date
+from typing import Any
+
+from fastapi import HTTPException, status
 
 from app.models.equipment import Equipment
 from app.models.orders import Order, OrderStatus
@@ -12,9 +15,9 @@ log = logging.getLogger("uvicorn")
 
 async def create_order(equipment: Equipment, requester: User, order_schema: OrderCreateSchema) -> Order:
     if order_schema.start_date < date.today():
-        raise ValueError("Start date is in the past")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Start date is in the past")
     if order_schema.start_date > order_schema.end_date:
-        raise ValueError("Start date is after end date")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Start date is after end date")
     order = await Order.create(
         equipment=equipment,
         requester=requester,
@@ -77,19 +80,11 @@ async def get_organization_orders(organization: Organization, offset: int = 0, l
     return organization_orders
 
 
-async def respond_to_order(order: Order, response: OrderStatus) -> Order:
-    order.status = response
-    await order.save(update_fields=["status"])
-    await order.fetch_related("equipment__category", "equipment__photo_and_video", "requester")
-    log.info(f"Response to order {order.id}: {response}")
-    return order
-
-
-async def update_order(order: Order, order_schema: OrderUpdateSchema) -> Order:
-    if order.status not in (OrderStatus.CREATED, OrderStatus.ACCEPTED):
-        raise ValueError("Order can't be updated")
+async def update_order_details(order: Order, order_schema: OrderUpdateSchema) -> Order:
+    if order.status != OrderStatus.CREATED:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Order can't be updated")
     if order_schema.start_date and order_schema.start_date < date.today():
-        raise ValueError("Start date is in the past")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Start date is in the past")
     if (
         order_schema.start_date
         and order_schema.end_date
@@ -99,7 +94,7 @@ async def update_order(order: Order, order_schema: OrderUpdateSchema) -> Order:
         or order_schema.end_date
         and order.start_date > order_schema.end_date
     ):
-        raise ValueError("Start date is after end date")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Start date is after end date")
 
     update_dict = order_schema.dict(exclude_unset=True)
     await order.update_from_dict(update_dict).save(update_fields=update_dict.keys())
@@ -107,11 +102,26 @@ async def update_order(order: Order, order_schema: OrderUpdateSchema) -> Order:
     return order
 
 
-async def cancel_order(order: Order) -> Order:
-    if order.status not in (OrderStatus.CREATED, OrderStatus.ACCEPTED, OrderStatus.REJECTED):
-        raise ValueError(f'Order with status "{order.status}" can\'t be canceled')
-    order.status = OrderStatus.CANCELED
+async def update_order_status(order: Order, new_status: OrderStatus) -> Order:
+    order.status = new_status
     await order.save(update_fields=["status"])
     await order.fetch_related("equipment__category", "equipment__photo_and_video", "requester")
-    log.info(f"Order canceled: {order.id}")
+    log.info(f"Order status updated: {order.id}")
+    return order
+
+
+async def update_order(order: Order, update: (str, Any) = (None, None), new_status: OrderStatus = None) -> Order:
+    updated_fields = []
+    if new_status is not None:
+        order.status = new_status
+        updated_fields.append("status")
+    
+    order_field, field_value = update
+    if order_field is not None:
+        setattr(order, order_field, field_value)
+        updated_fields.append(order_field)
+
+    await order.save(update_fields=updated_fields)
+    await order.fetch_related("equipment__category", "equipment__photo_and_video", "requester")
+    log.info(f"Order updated: {order.id}")
     return order

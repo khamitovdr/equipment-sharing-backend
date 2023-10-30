@@ -35,7 +35,7 @@ async def order_pre_save(
 ) -> None:
     if update_fields and "status" in update_fields:
         match order.status:
-            case OrderStatus.ACCEPTED:
+            case OrderStatus.CONTRACT_FORMATION:
                 await create_requester_order_notification(order, event=OutgoingOrderType.ORDER_ACCEPTED)
             case OrderStatus.REJECTED:
                 await create_requester_order_notification(order, event=OutgoingOrderType.ORDER_REJECTED)
