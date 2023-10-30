@@ -62,13 +62,13 @@ async def get_current_organization(
 ) -> Organization:
     """Returns current user's organization"""
     log.info("Getting current user's organization...")
-    if current_user.organization is None:
+    organization = await current_user.organization
+    if organization is None:
         log.error("Current user doesn't have an organization")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Current user doesn't have an organization",
         )
-    organization = await current_user.organization
     log.info(f"Current user's organization {organization.inn} received successfully")
     return organization
 
