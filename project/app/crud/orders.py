@@ -5,7 +5,7 @@ from typing import Any
 from fastapi import HTTPException, status
 
 from app.models.equipment import Equipment
-from app.models.orders import Order, OrderStatus
+from app.models.orders import Order, OrderStatus, OrderContractDraft, OrderContract, OrderContractSignatureOwner, OrderContractSignatureRenter
 from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.orders import OrderCreateSchema, OrderUpdateSchema
@@ -125,3 +125,36 @@ async def update_order(order: Order, update: (str, Any) = (None, None), new_stat
     await order.fetch_related("equipment__category", "equipment__photo_and_video", "requester")
     log.info(f"Order updated: {order.id}")
     return order
+
+
+async def get_contract_drafts(order: Order, only_last: bool = False) -> list[OrderContractDraft]:
+    query = order.contract_drafts.order_by("-created_at").prefetch_related("added_by")
+    if only_last:
+        return await query.first()
+    return await query.all()
+
+
+async def confirm_contract_draft(order: Order) -> Order:
+    # all contract drafts except last one are deleted
+    contract_drafts = await get_contract_drafts(order)
+    if not contract_drafts:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contract draft not found")
+    for contract_draft in contract_drafts[1:]:
+        await contract_draft.delete()
+    return await update_order_status(order, OrderStatus.CONTRACT_NEGOTIATION)
+
+
+async def accept_last_contract_draft(order: Order, role: str) -> OrderContractDraft:
+    contract_draft = await get_contract_drafts(order, only_last=True)
+    if contract_draft is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contract draft not found")
+    if role == "owner":
+        contract_draft.accepted_by_owner = True
+        update_fields = ["accepted_by_owner"]
+    elif role == "renter":
+        contract_draft.accepted_by_renter = True
+        update_fields = ["accepted_by_renter"]
+    else:
+        raise ValueError("Role must be 'owner' or 'renter'")
+    await contract_draft.save(update_fields=update_fields)
+    return contract_draft

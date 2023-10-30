@@ -5,6 +5,7 @@ import os
 from typing import Type
 
 from fastapi import UploadFile, HTTPException, status
+from tortoise import models
 from PIL import Image
 
 from app.config import get_settings
@@ -22,6 +23,7 @@ async def create_uploaded_file(
         user: User,
         allowed_types: list[str] = None,
         allowed_formats: list[str] = None,
+        host: models.Model = None,
     ) -> UploadedFileBaseModel:
     data = await file.read()
 
@@ -56,6 +58,9 @@ async def create_uploaded_file(
             path=get_save_path(),
             added_by=user,
         )
+    
+    if host:
+        file_record.host = host
 
     try:
         if media_type == "image":

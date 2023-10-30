@@ -14,6 +14,10 @@ class OrderContractDraft(UploadedFileBaseModel):
     accepted_by_renter = fields.BooleanField(default=False)
     accepted_by_owner = fields.BooleanField(default=False)
 
+    class PydanticMeta:
+        backward_relations = False
+        exclude = ["created_at", "host", "host_id", "hash"]
+
 
 class OrderContract(FileBaseModel):
     SAVE_PATH = "orders/documents/"

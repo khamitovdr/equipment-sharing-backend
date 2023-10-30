@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
 
 from app.crud.equipment import get_equipment_by_id
 from app.crud.orders import (
@@ -10,16 +10,21 @@ from app.crud.orders import (
     get_user_orders,
     update_order_details,
     update_order,
+    get_contract_drafts,
+    accept_last_contract_draft,
 )
+from app.crud.files import create_uploaded_file
 from app.models.equipment import EquipmentStatus
-from app.models.orders import OrderStatus, Order
+from app.models.orders import OrderStatus, Order, OrderContractDraft
 from app.models.users import User
 from app.schemas.orders import (
     OrderCreateSchema,
     OrderListSchema,
     OrderSchema,
     OrderUpdateSchema,
+    OrderContractDraftSchema,
 )
+from app.schemas.files import FileBaseSchema
 from app.services.auth import get_current_active_user
 from app.services.payments import create_payment_link
 
@@ -110,6 +115,60 @@ async def repeat_order_(order_id: int, current_user: User = Depends(get_current_
         OrderCreateSchema(equipment_id=order.equipment.id, start_date=order.start_date, end_date=order.end_date),
         current_user
     )
+    return order
+
+
+@router.post("/{order_id}/contract-drafts/", response_model=FileBaseSchema, status_code=status.HTTP_201_CREATED)
+async def upload_contract_draft_(
+    contract_draft: UploadFile,
+    order_id: int,
+    current_user: User = Depends(get_current_active_user),
+):
+    """Upload contract draft"""
+    order = await get_own_order(order_id, current_user)
+    if order.status != OrderStatus.CONTRACT_NEGOTIATION:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't upload contract draft for order with status '{order.status}'")
+    
+    file = await create_uploaded_file(
+        contract_draft, OrderContractDraft, current_user,
+        allowed_types=["application", "text"], host=order
+    )
+    return file
+
+
+@router.get("/{order_id}/contract-drafts/", response_model=list[OrderContractDraftSchema])
+async def get_contract_drafts_(
+    order_id: int,
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get contract drafts for order"""
+    order = await get_own_order(order_id, current_user)
+    return await get_contract_drafts(order)
+
+
+@router.get("/{order_id}/contract-drafts/last/", response_model=OrderContractDraftSchema)
+async def get_last_contract_draft_(
+    order_id: int,
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get last contract draft for order"""
+    order = await get_own_order(order_id, current_user)
+    draft = await get_contract_drafts(order, only_last=True)
+    if draft is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contract draft not found")
+    return draft
+
+
+@router.put("/{order_id}/accept-last-draft/", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
+async def accept_last_contract_draft_(
+    order_id: int,
+    current_user: User = Depends(get_current_active_user),
+):
+    """Accept last contract draft for order"""
+    order = await get_own_order(order_id, current_user)
+    if order.status != OrderStatus.CONTRACT_NEGOTIATION:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't accept contract draft for order with status '{order.status}'")
+    await accept_last_contract_draft(order, "renter")
     return order
 
 

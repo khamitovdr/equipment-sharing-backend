@@ -5,6 +5,7 @@ from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_
 
 from app import _init_models  # noqa: F401
 from app.models.orders import Order
+from app.models.orders import OrderContractDraft
 
 
 class OrderCreateSchema(BaseModel):
@@ -26,3 +27,6 @@ class ChatCredentialsSchema(BaseModel):
     username: str
     user_secret: str
     interlocutor_username: str
+
+
+OrderContractDraftSchema = pydantic_model_creator(OrderContractDraft, name="OrderContractDraftSchema")
