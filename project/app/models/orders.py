@@ -5,6 +5,7 @@ from tortoise import fields, models
 
 from app.models.equipment import TimeInterval
 from app.models.files import FileBaseModel, UploadedFileBaseModel
+from app.models.payments import PaymentBaseModel
 
 
 class OrderContractDraft(UploadedFileBaseModel):
@@ -46,6 +47,11 @@ class OrderContractSignatureOwner(OrderContractSignature):
     )
 
 
+class OrderPayment(PaymentBaseModel):
+    corresponding_order_id = fields.IntField()
+    order = fields.OneToOneField("models.Order", related_name="payment", on_delete=fields.CASCADE, null=True)
+
+
 @total_ordering
 class OrderStatus(str, Enum):
     CREATED = "created"
@@ -84,6 +90,11 @@ class OrderStatus(str, Enum):
         return NotImplemented
 
 
+class PaymentType(str, Enum):
+    VIA_PLATFORM = "via-platform"
+    BY_CASH = "by-cash"
+
+
 class Order(models.Model):
     equipment = fields.ForeignKeyField("models.Equipment", related_name="orders")
     requester = fields.ForeignKeyField("models.User", related_name="orders")
@@ -94,15 +105,14 @@ class Order(models.Model):
 
     status = fields.CharEnumField(OrderStatus, default=OrderStatus.CREATED)
 
-    cost = fields.FloatField(null=True)
+    cost = fields.DecimalField(max_digits=10, decimal_places=2, null=True)
     cost_accepted_by_renter = fields.BooleanField(default=True)
 
     signed_offline_by_renter = fields.BooleanField(default=False)
     signed_offline_by_owner = fields.BooleanField(default=False)
 
-    payment_via_platform = fields.BooleanField(null=True)
-    payment_id = fields.CharField(max_length=255, null=True)
-    payment_accepted_by_owner = fields.BooleanField(default=False)
+    payment_type = fields.CharEnumField(PaymentType, null=True)
+    is_paid = fields.BooleanField(default=False)
 
     equipment_accepted_by_renter = fields.BooleanField(default=False)
     equipment_accepted_by_owner = fields.BooleanField(default=False)

@@ -5,7 +5,7 @@ from typing import Any
 from fastapi import HTTPException, status
 
 from app.models.equipment import Equipment
-from app.models.orders import Order, OrderStatus, OrderContractDraft, OrderContract, OrderContractSignatureOwner, OrderContractSignatureRenter
+from app.models.orders import Order, OrderStatus, OrderContractDraft, PaymentType, OrderPayment
 from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.orders import OrderCreateSchema, OrderUpdateSchema
@@ -115,7 +115,7 @@ async def update_order(order: Order, update: (str, Any) = (None, None), new_stat
     if new_status is not None:
         order.status = new_status
         updated_fields.append("status")
-    
+
     order_field, field_value = update
     if order_field is not None:
         setattr(order, order_field, field_value)
@@ -162,3 +162,38 @@ async def accept_last_contract_draft(order: Order, role: str) -> OrderContractDr
         await update_order_status(order, OrderStatus.CONTRACT_SIGNING)
 
     return contract_draft
+
+
+async def create_payment(order: Order, payment_id: str, payment_status: str) -> OrderPayment:
+    payment = await OrderPayment.create(
+        id=payment_id,
+        corresponding_order_id=order.id,
+        amount=order.cost,
+        status=payment_status,
+    )
+    return payment
+
+
+async def confirm_payment_by_id(payment_id: int, payment_details: dict) -> Order:
+    payment = await OrderPayment.get_or_none(id=payment_id)
+    if payment is None:
+        raise ValueError(f"Payment with id={payment_id} not found")
+    
+    order = await Order.get_or_none(id=payment.corresponding_order_id)
+    if order is None:
+        raise ValueError(f"Order with id={payment.corresponding_order_id} not found")
+    
+    assert order.status == OrderStatus.WAITING_FOR_PAYMENT
+    assert order.payment_type == PaymentType.VIA_PLATFORM
+    assert order.cost == float(payment_details["object"]["amount"]["value"])
+    
+    payment.order = order
+    payment.events.append(payment_details)
+    payment.status = payment_details["object"]["status"]
+    await payment.save(update_fields=["order_id", "events", "status"])
+
+    order.is_paid = True
+    order.status = OrderStatus.ACCEPTANCE_BY_RENTER
+    await order.save(update_fields=["is_paid", "status"])
+
+    return order

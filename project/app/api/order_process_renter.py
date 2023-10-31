@@ -12,6 +12,7 @@ from app.crud.orders import (
     update_order,
     get_contract_drafts,
     accept_last_contract_draft,
+    create_payment,
 )
 from app.crud.files import create_uploaded_file
 from app.models.equipment import EquipmentStatus
@@ -232,5 +233,6 @@ async def get_payment_link_(order_id: int, return_url: str, current_user: User =
     if order.status != OrderStatus.WAITING_FOR_PAYMENT:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Order is not waiting for payment")
 
-    link = create_payment_link(order.cost, f"Оплата заказа №{order.id}", return_url)
-    return {"paymentLink": link}
+    payment_id, payment_status, payment_link = create_payment_link(order.cost, f"Оплата заказа №{order.id}", return_url)
+    payment = await create_payment(order, payment_id, payment_status)
+    return {"paymentLink": payment_link}

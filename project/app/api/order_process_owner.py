@@ -13,7 +13,7 @@ from app.crud.orders import (
     confirm_contract_draft,
 )
 from app.crud.files import create_uploaded_file
-from app.models.orders import OrderStatus, Order, OrderContractDraft, OrderContractSignatureOwner
+from app.models.orders import OrderStatus, Order, OrderContractDraft, OrderContractSignatureOwner, PaymentType
 from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.orders import (
@@ -91,7 +91,7 @@ async def accept_order_(
 @router.put("/{order_id}/set-cost", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
 async def set_cost_(
     order_id: int,
-    cost: int,
+    cost: float,
     organization: Organization = Depends(get_current_verified_organization),
 ):
     """Set cost for order"""
@@ -223,11 +223,6 @@ async def set_signed_offline_(
     return order
 
 
-class PaymentType(str, Enum):
-    VIA_PLATFORM = "via-platform"
-    BY_CASH = "by-cash"
-
-
 @router.put("/{order_id}/payment-type/", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
 async def set_payment_type_(
     order_id: int,
@@ -238,5 +233,5 @@ async def set_payment_type_(
     order = await get_own_order(order_id, organization)
     if order.status != OrderStatus.CHOOSING_PAYMENT_METHOD:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't set payment type for order with status '{order.status}'")
-    order = await update_order(order, ("payment_via_platform", True if payment_type == PaymentType.VIA_PLATFORM else False), OrderStatus.WAITING_FOR_PAYMENT)
+    order = await update_order(order, ("payment_type", payment_type), OrderStatus.WAITING_FOR_PAYMENT)
     return order

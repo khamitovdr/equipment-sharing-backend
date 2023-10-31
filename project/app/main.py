@@ -16,6 +16,7 @@ from app.api import (
     users,
     order_process_renter,
     order_process_owner,
+    payments,
 )
 from app.config import get_settings
 from app.db import init_db
@@ -47,6 +48,7 @@ def create_application() -> FastAPI:
     application.include_router(order_process_owner.router, prefix="/owner/orders", tags=["order owner process"])
     application.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
     application.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
+    application.include_router(payments.router, prefix="/payments", tags=["payments"])
 
     application.mount("/static", StaticFiles(directory=get_settings().static_dir), name="static")
 
@@ -71,14 +73,3 @@ async def startup_event():
 async def shutdown_event():
     log.info("Shutting down...")
     await scheduler.stop()
-
-
-# Swagger ui dark theme
-@app.get("/docs-dark", include_in_schema=False)
-async def custom_swagger_ui_html_cdn():
-    return get_swagger_ui_html(
-        openapi_url=app.openapi_url,
-        title=f"{app.title} - Swagger UI",
-        # swagger_ui_dark.css CDN link
-        swagger_css_url="https://cdn.jsdelivr.net/gh/Itz-fork/Fastapi-Swagger-UI-Dark/assets/swagger_ui_dark.min.css",
-    )
