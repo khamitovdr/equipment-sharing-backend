@@ -50,6 +50,16 @@ async def get_requests_(
     return await get_organization_orders(organization, offset=offset, limit=limit)
 
 
+@router.get("/{order_id}/", response_model=OrderSchema)
+async def get_request_(
+    order_id: int,
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Get incoming order by id"""
+    order = await get_own_order(order_id, organization)
+    return order
+
+
 @router.delete("/{order_id}/reject/", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
 async def reject_order_(
     order_id: int,

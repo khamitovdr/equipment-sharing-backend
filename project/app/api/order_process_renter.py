@@ -73,6 +73,13 @@ async def create_order_(create_schema: OrderCreateSchema, current_user: User = D
     return order
 
 
+@router.get("/{order_id}/", response_model=OrderSchema)
+async def get_order_(order_id: int, current_user: User = Depends(get_current_active_user)):
+    """Get outgoing order by id"""
+    order = await get_own_order(order_id, current_user)
+    return order
+
+
 @router.put("/{order_id}/", response_model=OrderSchema)
 async def update_order_(
     order_id: int, update_schema: OrderUpdateSchema, current_user: User = Depends(get_current_active_user)
