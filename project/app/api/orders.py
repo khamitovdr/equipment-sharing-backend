@@ -6,6 +6,7 @@ from app.crud.orders import (
     get_order_by_id,
 )
 from app.models.users import User
+from app.models.orders import OrderStatus
 from app.schemas.orders import ChatCredentialsSchema, OrderSchema
 from app.services.orders import get_user_secret
 from app.services.auth import get_current_active_user
@@ -65,3 +66,14 @@ async def get_order_chat_credentials_(order_id: int, current_user: User = Depend
         )
     else:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+
+
+@router.patch("/{order_id}/", response_model=OrderSchema)
+async def update_order_status_(order_id: int, new_status: OrderStatus):
+    """Update order status"""
+    order = await get_order_by_id(order_id)
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    order.status = new_status
+    await order.save()
+    return order

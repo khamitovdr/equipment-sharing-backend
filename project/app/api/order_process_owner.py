@@ -1,4 +1,5 @@
 import logging
+from enum import Enum
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
 
@@ -12,7 +13,7 @@ from app.crud.orders import (
     confirm_contract_draft,
 )
 from app.crud.files import create_uploaded_file
-from app.models.orders import OrderStatus, Order, OrderContractDraft
+from app.models.orders import OrderStatus, Order, OrderContractDraft, OrderContractSignatureOwner
 from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.orders import (
@@ -24,6 +25,7 @@ from app.schemas.files import FileBaseSchema
 from app.services.auth import get_current_active_user
 from app.services.organizations import get_current_verified_organization
 from app.services.documents import get_contract_template
+from app.services.orders import verify_e_signature
 
 log = logging.getLogger("uvicorn")
 
@@ -172,4 +174,69 @@ async def accept_last_contract_draft_(
     if order.status != OrderStatus.CONTRACT_NEGOTIATION:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't accept contract draft for order with status '{order.status}'")
     await accept_last_contract_draft(order, "owner")
+    return order
+
+
+@router.post("/{order_id}/e-sign/", response_model=FileBaseSchema, status_code=status.HTTP_202_ACCEPTED)
+async def upload_e_sign_(
+    e_sign_data: UploadFile,
+    order_id: int,
+    current_user: User = Depends(get_current_active_user),
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Upload contract draft"""
+    order = await get_own_order(order_id, organization)
+    contract = await order.contract
+    if order.status != OrderStatus.CONTRACT_SIGNING:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't upload e-sign for order with status '{order.status}'")
+    
+    if not await verify_e_signature(e_sign_data, order, "owner"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="E-sign is not valid")
+    
+    e_sign = await create_uploaded_file(
+        e_sign_data, OrderContractSignatureOwner, current_user,
+        allowed_types=["application", "text"], host=contract
+    )
+    e_sign.verified = True
+    await e_sign.save()
+
+    if await contract.signature_renter:
+        await update_order_status(order, OrderStatus.CHOOSING_PAYMENT_METHOD)
+
+    return e_sign
+
+
+@router.put("/{order_id}/signed-offline/", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
+async def set_signed_offline_(
+    order_id: int,
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Sign contract offline"""
+    order = await get_own_order(order_id, organization)
+    if order.status != OrderStatus.CONTRACT_SIGNING:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't sign contract offline for order with status '{order.status}'")
+    order = await update_order(order, ("signed_offline_by_owner", True))
+
+    if order.signed_offline_by_renter:
+        await update_order_status(order, OrderStatus.CHOOSING_PAYMENT_METHOD)
+
+    return order
+
+
+class PaymentType(str, Enum):
+    VIA_PLATFORM = "via-platform"
+    BY_CASH = "by-cash"
+
+
+@router.put("/{order_id}/payment-type/", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
+async def set_payment_type_(
+    order_id: int,
+    payment_type: PaymentType,
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Set payment type for order"""
+    order = await get_own_order(order_id, organization)
+    if order.status != OrderStatus.CHOOSING_PAYMENT_METHOD:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't set payment type for order with status '{order.status}'")
+    order = await update_order(order, ("payment_via_platform", True if payment_type == PaymentType.VIA_PLATFORM else False), OrderStatus.WAITING_FOR_PAYMENT)
     return order

@@ -25,21 +25,24 @@ class OrderContract(FileBaseModel):
     host = fields.OneToOneField("models.Order", related_name="contract", on_delete=fields.CASCADE, null=True)
 
 
-class OrderContractSignatureRenter(UploadedFileBaseModel):
+class OrderContractSignature(UploadedFileBaseModel):
     SAVE_PATH = "orders/documents/"
 
     verified = fields.BooleanField(default=False)
+
+    class Meta:
+        abstract = True
+
+
+class OrderContractSignatureRenter(OrderContractSignature):
     host = fields.OneToOneField(
-        "models.Order", related_name="contract_signature_renter", on_delete=fields.CASCADE, null=True
+        "models.OrderContract", related_name="signature_renter", on_delete=fields.CASCADE, null=True
     )
 
 
-class OrderContractSignatureOwner(UploadedFileBaseModel):
-    SAVE_PATH = "orders/documents/"
-
-    verified = fields.BooleanField(default=False)
+class OrderContractSignatureOwner(OrderContractSignature):
     host = fields.OneToOneField(
-        "models.Order", related_name="contract_signature_owner", on_delete=fields.CASCADE, null=True
+        "models.OrderContract", related_name="signature_owner", on_delete=fields.CASCADE, null=True
     )
 
 

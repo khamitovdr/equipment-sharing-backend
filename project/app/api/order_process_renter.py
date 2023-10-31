@@ -15,7 +15,7 @@ from app.crud.orders import (
 )
 from app.crud.files import create_uploaded_file
 from app.models.equipment import EquipmentStatus
-from app.models.orders import OrderStatus, Order, OrderContractDraft
+from app.models.orders import OrderStatus, Order, OrderContractDraft, OrderContractSignatureRenter
 from app.models.users import User
 from app.schemas.orders import (
     OrderCreateSchema,
@@ -27,6 +27,7 @@ from app.schemas.orders import (
 from app.schemas.files import FileBaseSchema
 from app.services.auth import get_current_active_user
 from app.services.payments import create_payment_link
+from app.services.orders import verify_e_signature
 
 log = logging.getLogger("uvicorn")
 
@@ -179,12 +180,57 @@ async def accept_last_contract_draft_(
     return order
 
 
+@router.post("/{order_id}/e-sign/", response_model=FileBaseSchema, status_code=status.HTTP_202_ACCEPTED)
+async def upload_e_sign_(
+    e_sign_data: UploadFile,
+    order_id: int,
+    current_user: User = Depends(get_current_active_user),
+):
+    """Upload contract draft"""
+    order = await get_own_order(order_id, current_user)
+    contract = await order.contract
+    if order.status != OrderStatus.CONTRACT_SIGNING:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't upload e-sign for order with status '{order.status}'")
+    
+    if not await verify_e_signature(e_sign_data, order, "renter"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="E-sign is not valid")
+    
+    e_sign = await create_uploaded_file(
+        e_sign_data, OrderContractSignatureRenter, current_user,
+        allowed_types=["application", "text"], host=contract
+    )
+    e_sign.verified = True
+    await e_sign.save()
+
+    if await contract.signature_owner:
+        await update_order_status(order, OrderStatus.CHOOSING_PAYMENT_METHOD)
+
+    return e_sign
+
+
+@router.put("/{order_id}/signed-offline/", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
+async def set_signed_offline_(
+    order_id: int,
+    current_user: User = Depends(get_current_active_user),
+):
+    """Sign contract offline"""
+    order = await get_own_order(order_id, current_user)
+    if order.status != OrderStatus.CONTRACT_SIGNING:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't sign contract offline for order with status '{order.status}'")
+    order = await update_order(order, ("signed_offline_by_renter", True))
+
+    if order.signed_offline_by_owner:
+        await update_order_status(order, OrderStatus.CHOOSING_PAYMENT_METHOD)
+
+    return order
+
+
 @router.get("/{order_id}/get-payment-link/")
 async def get_payment_link_(order_id: int, return_url: str, current_user: User = Depends(get_current_active_user)):
     """Get payment link for order"""
     order = await get_own_order(order_id, current_user)
     if order.status != OrderStatus.WAITING_FOR_PAYMENT:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order is not waiting for payment")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Order is not waiting for payment")
 
-    link = create_payment_link(order.cost(), f"Оплата заказа №{order.id}", return_url)
+    link = create_payment_link(order.cost, f"Оплата заказа №{order.id}", return_url)
     return {"paymentLink": link}

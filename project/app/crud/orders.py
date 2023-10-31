@@ -157,4 +157,8 @@ async def accept_last_contract_draft(order: Order, role: str) -> OrderContractDr
     else:
         raise ValueError("Role must be 'owner' or 'renter'")
     await contract_draft.save(update_fields=update_fields)
+
+    if contract_draft.accepted_by_owner and contract_draft.accepted_by_renter:
+        await update_order_status(order, OrderStatus.CONTRACT_SIGNING)
+
     return contract_draft
