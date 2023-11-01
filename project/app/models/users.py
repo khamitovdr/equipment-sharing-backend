@@ -6,7 +6,9 @@ class User(models.Model):
     is_owner = fields.BooleanField(default=False)
     hashed_password = fields.CharField(max_length=150)
     phone = fields.CharField(max_length=100)
-    full_name = fields.CharField(max_length=150)
+    name = fields.CharField(max_length=150)
+    middle_name = fields.CharField(max_length=150, null=True)
+    surname = fields.CharField(max_length=150)
     #: User can be disabled (baned) by admin
     disabled = fields.BooleanField(default=False)
     is_admin = fields.BooleanField(default=False)
@@ -28,7 +30,9 @@ class User(models.Model):
             "email",
             "is_owner",
             "phone",
-            "full_name",
+            "name",
+            "middle_name",
+            "surname",
             "disabled",
             "is_verified_organization_member",
             "organization_inn",

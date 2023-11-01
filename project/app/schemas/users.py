@@ -11,7 +11,9 @@ class UserCreateSchema(BaseModel):
     is_owner: bool = False
     email: EmailStr
     phone: str
-    full_name: str
+    name: str
+    middle_name: str or None = None
+    surname: str or None = None
     password: str
     organization_inn: str or None = None
 
@@ -45,7 +47,9 @@ class UserUpdateSchema(UserCreateSchema):
     is_owner: bool or None = None
     email: EmailStr or None = None
     phone: str or None = None
-    full_name: str or None = None
+    name: str or None = None
+    middle_name: str or None = None
+    surname: str or None = None
     password: str or None = None
     new_password: str or None = None
 

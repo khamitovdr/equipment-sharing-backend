@@ -67,7 +67,7 @@ async def get_contract_template(
         "end_year": end_date.year,
 
         "renter_organization_name": renter_organization.short_name if renter_has_organization else PLUG,
-        "renter_name": renter.full_name,
+        "renter_name": f"{renter.last_name} {renter.first_name} {renter.middle_name}",
         "renter_legal_address": renter_organization.legal_address if renter_has_organization else PLUG,
         "renter_inn": renter_organization.inn if renter_has_organization else PLUG,
         "renter_kpp": renter_organization.kpp if renter_has_organization else PLUG,
