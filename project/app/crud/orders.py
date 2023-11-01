@@ -9,6 +9,7 @@ from app.models.orders import Order, OrderStatus, OrderContractDraft, PaymentTyp
 from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.orders import OrderCreateSchema, OrderUpdateSchema
+from app.services.payments import check_payment_succeed
 
 log = logging.getLogger("uvicorn")
 
@@ -175,6 +176,9 @@ async def create_payment(order: Order, payment_id: str, payment_status: str) -> 
 
 
 async def confirm_payment_by_id(payment_id: int, payment_details: dict) -> Order:
+    if not check_payment_succeed(payment_id):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Payment not succeed")
+    
     payment = await OrderPayment.get_or_none(id=payment_id)
     if payment is None:
         raise ValueError(f"Payment with id={payment_id} not found")
@@ -191,6 +195,8 @@ async def confirm_payment_by_id(payment_id: int, payment_details: dict) -> Order
     payment.events.append(payment_details)
     payment.status = payment_details["object"]["status"]
     await payment.save(update_fields=["order_id", "events", "status"])
+
+    await OrderPayment.filter(corresponding_order_id=order.id, order_id__isnull=True).delete()
 
     order.is_paid = True
     order.status = OrderStatus.ACCEPTANCE_BY_RENTER

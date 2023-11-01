@@ -20,3 +20,8 @@ def create_payment_link(amount: float, description: str, return_url: str) -> (st
         uuid.uuid4(),
     )
     return payment.id, payment.status, payment.confirmation.confirmation_url
+
+
+def check_payment_succeed(payment_id: str) -> bool:
+    payment = Payment.find_one(payment_id)
+    return payment.status == "succeeded"
