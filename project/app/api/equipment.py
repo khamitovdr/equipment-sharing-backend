@@ -2,6 +2,10 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 
+from app.crud.organizations import (
+    get_current_organization,
+    get_current_verified_organization,
+)
 from app.crud.equipment import (
     create_equipment,
     create_equipment_category,
@@ -32,10 +36,6 @@ from app.schemas.equipment import (
 )
 from app.schemas.files import FileBaseSchema, MediaBaseSchema
 from app.services.auth import get_current_active_user
-from app.services.organizations import (
-    get_current_organization,
-    get_current_verified_organization,
-)
 
 log = logging.getLogger("uvicorn")
 

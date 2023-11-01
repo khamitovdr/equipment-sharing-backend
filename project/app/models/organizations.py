@@ -13,5 +13,11 @@ class Organization(models.Model):
     manager_name = fields.CharField(max_length=255, null=True)
     main_activity = fields.CharField(max_length=15, null=True)
 
+    contact_phone = fields.CharField(max_length=255, null=True)
+    contact_email = fields.CharField(max_length=255, null=True)
+    contact_employee_name = fields.CharField(max_length=255, null=True)
+    contact_employee_middle_name = fields.CharField(max_length=255, null=True)
+    contact_employee_surname = fields.CharField(max_length=255, null=True)
+    
     class PydanticMeta:
         exclude = ("users", "equipment", "notifications")

@@ -44,6 +44,12 @@ async def update_user(
     return user
 
 
+async def verify_user_organization(user: User) -> User:
+    user.is_verified_organization_member = True
+    await user.save()
+    return user
+
+
 async def get_users(offset: int = 0, limit: int = 40) -> list[User]:
     return await User.all().order_by("-created_at").offset(offset).limit(limit)  # .prefetch_related("organization")
 

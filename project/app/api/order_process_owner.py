@@ -23,7 +23,7 @@ from app.schemas.orders import (
 )
 from app.schemas.files import FileBaseSchema
 from app.services.auth import get_current_active_user
-from app.services.organizations import get_current_verified_organization
+from app.crud.organizations import get_current_verified_organization
 from app.services.documents import get_contract_template
 from app.services.orders import verify_e_signature
 

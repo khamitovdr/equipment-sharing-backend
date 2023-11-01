@@ -13,7 +13,7 @@ class UserCreateSchema(BaseModel):
     phone: str
     full_name: str
     password: str
-    organization_data: dict or None = None
+    organization_inn: str or None = None
 
     @validator("phone")
     def check_phone(cls, v):
@@ -34,7 +34,7 @@ class UserCreateSchema(BaseModel):
             raise ValueError("Password must contain at least one digit")
         return v
 
-    @validator("organization_data", always=True)
+    @validator("organization_inn", always=True)
     def check_organization_inn(cls, v, values):
         if values.get("is_owner") and not v:
             raise ValueError("Organization is required for owners")

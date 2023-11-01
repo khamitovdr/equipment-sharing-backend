@@ -11,7 +11,7 @@ from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.notifications import NotificationListSchema
 from app.services.auth import get_current_active_user
-from app.services.organizations import get_current_verified_organization
+from app.crud.organizations import get_current_verified_organization
 
 log = logging.getLogger("uvicorn")
 

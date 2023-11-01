@@ -10,7 +10,9 @@ from app.crud.users import (
     get_users,
     update_user,
     update_user_requisites,
+    verify_user_organization,
 )
+from app.crud.organizations import get_organization_by_inn
 from app.models.users import User
 from app.schemas.users import (
     UserCreateSchema,
@@ -25,7 +27,6 @@ from app.services.auth import (
     get_current_active_user,
     get_password_hash,
 )
-from app.services.organizations import get_or_create_organization_by_inn
 
 log = logging.getLogger("uvicorn")
 
@@ -55,8 +56,8 @@ async def create_new_user(user_schema: UserCreateSchema):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User with this email already exists")
 
     user_schema.password = get_password_hash(user_schema.password)
-    if user_schema.organization_data:
-        organization = await get_or_create_organization_by_inn(user_schema.organization_data)
+    if user_schema.organization_inn:
+        organization = await get_organization_by_inn(user_schema.organization_inn)
     else:
         organization = None
 
@@ -76,10 +77,10 @@ async def update_current_user(
         user_schema.new_password = None
 
     await current_user.fetch_related("organization")
-    if user_schema.organization_data and (
-        current_user.organization is None or user_schema.organization_data["data"]["inn"] != current_user.organization.inn
+    if user_schema.organization_inn and (
+        current_user.organization is None or user_schema.organization_inn != current_user.organization.inn
     ):
-        organization = await get_or_create_organization_by_inn(user_schema.organization_data)
+        organization = await get_organization_by_inn(user_schema.organization_inn)
     else:
         organization = None
 
@@ -102,3 +103,16 @@ async def update_user_requisites_(
     """Update user requisites"""
     requisites = await update_user_requisites(current_user, requisites_schema)
     return requisites
+
+
+@router.patch("/{user_id}/verify", status_code=status.HTTP_202_ACCEPTED)
+async def verify_user(user_id: int):
+    """Verify user organization"""
+    user = await get_user_by_id(user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    if await user.organization is None:
+        raise HTTPException(status_code=400, detail="User has no organization")
+
+    await verify_user_organization(user)
+    return {"detail": "User organization verified"}
