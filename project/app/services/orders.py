@@ -1,9 +1,11 @@
+import aiohttp
 import re
 import hashlib
 
 from fastapi import UploadFile
 
 from app.models.orders import Order
+from app.config import get_settings
 
 
 def get_user_secret(order_id: int, role: str) -> str:
@@ -34,3 +36,36 @@ async def verify_e_signature(e_sign_data: UploadFile, order: Order, role: str) -
     if not e_sign_template.match(e_sign_data_content):
         return False
     return True
+
+
+async def create_chatengine_users(order: Order) -> None:
+
+    renter = await order.requester
+    organization = await order.equipment.organization
+
+    chat_engine_url = "https://api.chatengine.io/users/"
+    users_data = {
+        "renter": {
+            "username": f"order-{order.id}_renter",
+            "secret": get_user_secret(order.id, "renter"),
+            "email": renter.email,
+            "first_name": renter.name,
+            "last_name": renter.surname,
+        },
+        "owner": {
+            "username": f"order-{order.id}_owner",
+            "secret": get_user_secret(order.id, "owner"),
+            "email": organization.contact_email,
+            "first_name": organization.contact_employee_name if organization.contact_employee_name else "Представитель компании",
+            "last_name": organization.contact_employee_surname,
+        },
+    }
+    headers = {
+    'PRIVATE-KEY': get_settings().chat_engine_secret_key,
+    }
+
+    async with aiohttp.ClientSession() as session:
+        for user in users_data.values():
+            async with session.post(chat_engine_url, json=user, headers=headers) as res:
+                user = await res.json()
+                print(user)

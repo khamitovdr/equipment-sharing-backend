@@ -10,6 +10,7 @@ from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.orders import OrderCreateSchema, OrderUpdateSchema
 from app.services.payments import check_payment_succeed
+from app.services.orders import create_chatengine_users
 
 log = logging.getLogger("uvicorn")
 
@@ -19,6 +20,7 @@ async def create_order(equipment: Equipment, requester: User, order_schema: Orde
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Start date is in the past")
     if order_schema.start_date > order_schema.end_date:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Start date is after end date")
+
     order = await Order.create(
         equipment=equipment,
         requester=requester,
@@ -26,8 +28,11 @@ async def create_order(equipment: Equipment, requester: User, order_schema: Orde
         end_date=order_schema.end_date,
     )
     order.cost = order.estimated_cost()
+    await create_chatengine_users(order)
     await order.save(update_fields=["cost"])
+
     log.info(f"Order created: {order.id}")
+
     await order.fetch_related(
         "equipment__category",
         "equipment__photo_and_video",

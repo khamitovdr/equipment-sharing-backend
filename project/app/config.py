@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     secret_key: str = None
     yookassa_shop_id: str = None
     yookassa_secret_key: str = None
+    chat_engine_project_id: str = None
+    chat_engine_secret_key: str = None
     sentry_dsn: str = None
 
 
