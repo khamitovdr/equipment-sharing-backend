@@ -28,7 +28,11 @@ from app.schemas.orders import (
 from app.schemas.files import FileBaseSchema
 from app.services.auth import get_current_active_user
 from app.services.payments import create_payment_link
-from app.services.orders import verify_e_signature
+from app.services.orders import verify_e_signature, proscribe_role_and_chat_credentials
+
+
+ROLE = "renter"
+
 
 log = logging.getLogger("uvicorn")
 
@@ -49,6 +53,17 @@ async def get_own_order(order_id: int, current_user: User) -> Order:
 
 
 router = APIRouter()
+
+
+@router.patch("/{order_id}/", response_model=OrderSchema)
+async def update_order_status_(order_id: int, new_status: OrderStatus):
+    """Update order status"""
+    order = await get_order_by_id(order_id)
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    order.status = new_status
+    await order.save()
+    return order
 
 
 @router.get("/", response_model=OrderListSchema)
@@ -72,14 +87,14 @@ async def create_order_(create_schema: OrderCreateSchema, current_user: User = D
         raise HTTPException(status_code=400, detail="Equipment not published")
 
     order = await create_order(equipment, current_user, create_schema)
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.get("/{order_id}/", response_model=OrderSchema)
 async def get_order_(order_id: int, current_user: User = Depends(get_current_active_user)):
     """Get outgoing order by id"""
     order = await get_own_order(order_id, current_user)
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.put("/{order_id}/", response_model=OrderSchema)
@@ -91,7 +106,7 @@ async def update_order_(
     if order.status > OrderStatus.CREATED:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Order with status '{order.status}' can't be updated")
     order = await update_order_details(order, update_schema)
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.delete("/{order_id}/cancel", response_model=OrderSchema)
@@ -101,7 +116,7 @@ async def cancel_order_(order_id: int, current_user: User = Depends(get_current_
     if order.status > OrderStatus.CONTRACT_SIGNING:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Order with status '{order.status}' can't be canceled")
     order = await update_order_status(order, OrderStatus.CANCELED)
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.put("/{order_id}/accept-cost", response_model=OrderSchema)
@@ -111,7 +126,7 @@ async def accept_cost_(order_id: int, current_user: User = Depends(get_current_a
     if order.status != OrderStatus.COST_NEGOTIATION:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order is not waiting for cost acceptance")
     order = await update_order(order, ("cost_accepted_by_renter", True), OrderStatus.CONTRACT_FORMATION)
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.post("/{order_id}/repeat", response_model=OrderSchema)
@@ -124,7 +139,7 @@ async def repeat_order_(order_id: int, current_user: User = Depends(get_current_
         OrderCreateSchema(equipment_id=order.equipment.id, start_date=order.start_date, end_date=order.end_date),
         current_user
     )
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.post("/{order_id}/contract-drafts/", response_model=FileBaseSchema, status_code=status.HTTP_201_CREATED)
@@ -178,7 +193,7 @@ async def accept_last_contract_draft_(
     if order.status != OrderStatus.CONTRACT_NEGOTIATION:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't accept contract draft for order with status '{order.status}'")
     await accept_last_contract_draft(order, "renter")
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.post("/{order_id}/e-sign/", response_model=FileBaseSchema, status_code=status.HTTP_202_ACCEPTED)
@@ -223,7 +238,7 @@ async def set_signed_offline_(
     if order.signed_offline_by_owner:
         await update_order_status(order, OrderStatus.CHOOSING_PAYMENT_METHOD)
 
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.get("/{order_id}/get-payment-link/")

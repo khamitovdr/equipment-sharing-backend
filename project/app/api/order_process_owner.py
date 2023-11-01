@@ -25,7 +25,10 @@ from app.schemas.files import FileBaseSchema
 from app.services.auth import get_current_active_user
 from app.crud.organizations import get_current_verified_organization
 from app.services.documents import get_contract_template
-from app.services.orders import verify_e_signature
+from app.services.orders import verify_e_signature, proscribe_role_and_chat_credentials
+
+
+ROLE = "owner"
 
 log = logging.getLogger("uvicorn")
 
@@ -59,7 +62,7 @@ async def get_request_(
 ):
     """Get incoming order by id"""
     order = await get_own_order(order_id, organization)
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.delete("/{order_id}/reject/", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
@@ -72,7 +75,7 @@ async def reject_order_(
     if order.status > OrderStatus.CONTRACT_SIGNING:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Order with status '{order.status}' can't be canceled")
     order = await update_order_status(order, OrderStatus.REJECTED)
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.put("/{order_id}/accept", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
@@ -85,7 +88,7 @@ async def accept_order_(
     if order.status != OrderStatus.CREATED:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Order with status '{order.status}' can't be accepted")
     order = await update_order_status(order, OrderStatus.CONTRACT_FORMATION)
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.put("/{order_id}/set-cost", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
@@ -99,7 +102,7 @@ async def set_cost_(
     if order.status not in (OrderStatus.CREATED, OrderStatus.REJECTED, OrderStatus.COST_NEGOTIATION):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't set cost for order with status '{order.status}'")
     order = await update_order(order, ("cost", cost), OrderStatus.COST_NEGOTIATION)
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.get("/{order_id}/contract-template/")
@@ -138,7 +141,7 @@ async def confirm_contract_draft_(
     if order.status != OrderStatus.CONTRACT_FORMATION:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't confirm contract draft for order with status '{order.status}'")
     order = await confirm_contract_draft(order)
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.get("/{order_id}/contract-drafts/", response_model=list[OrderContractDraftSchema])
@@ -174,7 +177,7 @@ async def accept_last_contract_draft_(
     if order.status != OrderStatus.CONTRACT_NEGOTIATION:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't accept contract draft for order with status '{order.status}'")
     await accept_last_contract_draft(order, "owner")
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.post("/{order_id}/e-sign/", response_model=FileBaseSchema, status_code=status.HTTP_202_ACCEPTED)
@@ -220,7 +223,7 @@ async def set_signed_offline_(
     if order.signed_offline_by_renter:
         await update_order_status(order, OrderStatus.CHOOSING_PAYMENT_METHOD)
 
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.put("/{order_id}/payment-type/", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
@@ -234,4 +237,4 @@ async def set_payment_type_(
     if order.status != OrderStatus.CHOOSING_PAYMENT_METHOD:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't set payment type for order with status '{order.status}'")
     order = await update_order(order, ("payment_type", payment_type), OrderStatus.WAITING_FOR_PAYMENT)
-    return order
+    return proscribe_role_and_chat_credentials(order, ROLE)

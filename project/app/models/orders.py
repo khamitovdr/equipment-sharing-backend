@@ -1,3 +1,4 @@
+import hashlib
 from enum import Enum
 from functools import total_ordering, lru_cache
 
@@ -117,6 +118,8 @@ class Order(models.Model):
     equipment_accepted_by_renter = fields.BooleanField(default=False)
     equipment_accepted_by_owner = fields.BooleanField(default=False)
 
+    role_and_chat_credentials = fields.JSONField(null=True)
+
     def estimated_cost(self) -> float:
         price = self.equipment.price
         time_interval = self.equipment.time_interval
@@ -132,11 +135,14 @@ class Order(models.Model):
 
         return round(cost, 2)
     
+    # TODO
     def waiting_for_renter_action(self) -> bool:
         return NotImplemented
     
+    # TODO
     def waiting_for_owner_action(self) -> bool:
         return NotImplemented
+    
     class PydanticMeta:
         backward_relations = False
         # computed = ["waiting_for_renter_action", "waiting_for_owner_action"]

@@ -1,7 +1,6 @@
 import logging
 
 from fastapi import FastAPI
-from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
 import sentry_sdk
 
@@ -9,7 +8,6 @@ from app import scheduler
 from app.api import (
     equipment,
     notifications,
-    orders,
     organizations,
     reviews,
     token,
@@ -43,7 +41,6 @@ def create_application() -> FastAPI:
     application.include_router(users.router, prefix="/users", tags=["users"])
     application.include_router(organizations.router, prefix="/organizations", tags=["organizations"])
     application.include_router(equipment.router, prefix="/equipment", tags=["equipment"])
-    application.include_router(orders.router, prefix="/orders", tags=["orders"])
     application.include_router(order_process_renter.router, prefix="/renter/orders", tags=["order renter process"])
     application.include_router(order_process_owner.router, prefix="/owner/orders", tags=["order owner process"])
     application.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
