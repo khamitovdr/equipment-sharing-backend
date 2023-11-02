@@ -16,7 +16,7 @@ def extract_organization_data_from_dadata_response(dadata_response: dict) -> Org
         registration_date=result["state"]["registration_date"],
         # authorized_capital_k_rubles=result["capital"]["value"],
         legal_address=result["address"]["value"],
-        manager_name=result.get("management", {}).get("name"),
+        manager_name=result["management"].get("name") if result.get("management") else None,
         main_activity=result["okved"],
     )
     return response
