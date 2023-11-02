@@ -25,7 +25,7 @@ async def create_or_update_review(order: Order, user: User, review: ReviewCreate
     else:
         await review.update_from_dict(params)
         await review.save()
-        
+
     return review
 
 

@@ -1,11 +1,11 @@
 import logging
 
-from app.models.organizations import Organization
-from app.models.users import User
-from app.models.requisites import Requisites
-from app.schemas.users import UserCreateSchema, UserUpdateSchema
-from app.schemas.requisites import RequisitesUpdateSchema
 from app.crud.requisites import _update_requisites
+from app.models.organizations import Organization
+from app.models.requisites import Requisites
+from app.models.users import User
+from app.schemas.requisites import RequisitesUpdateSchema
+from app.schemas.users import UserCreateSchema, UserUpdateSchema
 
 log = logging.getLogger("uvicorn")
 

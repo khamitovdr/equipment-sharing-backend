@@ -9,7 +9,6 @@ Configuration.secret_key = get_settings().yookassa_secret_key
 
 
 def create_payment_link(amount: float, description: str, return_url: str) -> (str, str):
-    payment_id = uuid.uuid4()
     payment = Payment.create(
         {
             "amount": {"value": amount, "currency": "RUB"},

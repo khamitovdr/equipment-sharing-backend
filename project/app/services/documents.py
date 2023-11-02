@@ -5,7 +5,6 @@ from docx.enum.text import WD_COLOR_INDEX
 
 from app.models.orders import Order
 
-
 MONTHS = {
     1: "января",
     2: "февраля",
@@ -32,8 +31,8 @@ CONTRACT_MANUFACTURING_TEMPLATES = {
 
 
 async def get_contract_template(
-        city: str,
-        order: Order,
+    city: str,
+    order: Order,
 ) -> str:
     renter = await order.requester
     equipment = await order.equipment
@@ -65,28 +64,28 @@ async def get_contract_template(
         "end_day": end_date.day,
         "end_month": MONTHS[end_date.month],
         "end_year": end_date.year,
-
         "renter_organization_name": renter_organization.short_name if renter_has_organization else PLUG,
         "renter_name": f"{renter.last_name} {renter.first_name} {renter.middle_name}",
         "renter_legal_address": renter_organization.legal_address if renter_has_organization else PLUG,
         "renter_inn": renter_organization.inn if renter_has_organization else PLUG,
         "renter_kpp": renter_organization.kpp if renter_has_organization else PLUG,
-
         "renter_payment_account": renter_requisites.payment_account if renter_has_requisites else PLUG,
         "renter_bank_name": renter_requisites.bank_name if renter_has_requisites else PLUG,
         "renter_bank_bic": renter_requisites.bank_bic if renter_has_requisites else PLUG,
-        "renter_bank_correspondent_account": renter_requisites.bank_correspondent_account if renter_has_requisites else PLUG,
-
+        "renter_bank_correspondent_account": renter_requisites.bank_correspondent_account
+        if renter_has_requisites
+        else PLUG,
         "owner_organization_name": owner.short_name,
         "owner_manager_name": owner.manager_name,
         "owner_legal_address": owner.legal_address,
         "owner_inn": owner.inn,
         "owner_kpp": owner.kpp,
-        
         "owner_payment_account": owner_requisites.payment_account if owner_has_requisites else PLUG,
         "owner_bank_name": owner_requisites.bank_name if owner_has_requisites else PLUG,
         "owner_bank_bic": owner_requisites.bank_bic if owner_has_requisites else PLUG,
-        "owner_bank_correspondent_account": owner_requisites.bank_correspondent_account if owner_has_requisites else PLUG,
+        "owner_bank_correspondent_account": owner_requisites.bank_correspondent_account
+        if owner_has_requisites
+        else PLUG,
     }
 
     contract_template_path = CONTRACT_MANUFACTURING_TEMPLATES[category.name]
@@ -106,7 +105,7 @@ async def get_contract_template(
                         cell.text = cell.text.replace(f"<<{key}>>", str(value))
                         cell.paragraphs[0].runs[0].font.highlight_color = WD_COLOR_INDEX.YELLOW
 
-    hash = hashlib.sha1(str(substitutions).encode('utf-8')).hexdigest()
-    save_path = f'static/orders/documents/{hash}.docx'
+    hash = hashlib.sha1(str(substitutions).encode("utf-8")).hexdigest()
+    save_path = f"static/orders/documents/{hash}.docx"
     doc.save(save_path)
     return save_path

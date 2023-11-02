@@ -1,32 +1,32 @@
 import logging
-from enum import Enum
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 
+from app.crud.files import create_uploaded_file
 from app.crud.orders import (
-    update_order_status,
+    accept_last_contract_draft,
+    confirm_contract_draft,
+    get_contract_drafts,
     get_order_by_id,
     get_organization_orders,
     update_order,
-    get_contract_drafts,
-    accept_last_contract_draft,
-    confirm_contract_draft,
+    update_order_status,
 )
-from app.crud.files import create_uploaded_file
-from app.models.orders import OrderStatus, Order, OrderContractDraft, OrderContractSignatureOwner, PaymentType
+from app.crud.organizations import get_current_verified_organization
+from app.models.orders import (
+    Order,
+    OrderContractDraft,
+    OrderContractSignatureOwner,
+    OrderStatus,
+    PaymentType,
+)
 from app.models.organizations import Organization
 from app.models.users import User
-from app.schemas.orders import (
-    OrderListSchema,
-    OrderSchema,
-    OrderContractDraftSchema,
-)
 from app.schemas.files import FileBaseSchema
+from app.schemas.orders import OrderContractDraftSchema, OrderListSchema, OrderSchema
 from app.services.auth import get_current_active_user
-from app.crud.organizations import get_current_verified_organization
 from app.services.documents import get_contract_template
-from app.services.orders import verify_e_signature, proscribe_role_and_chat_credentials
-
+from app.services.orders import proscribe_role_and_chat_credentials, verify_e_signature
 
 ROLE = "owner"
 
@@ -73,7 +73,9 @@ async def reject_order_(
     """Reject incoming order"""
     order = await get_own_order(order_id, organization)
     if order.status > OrderStatus.CONTRACT_SIGNING:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Order with status '{order.status}' can't be canceled")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"Order with status '{order.status}' can't be canceled"
+        )
     order = await update_order_status(order, OrderStatus.REJECTED)
     return proscribe_role_and_chat_credentials(order, ROLE)
 
@@ -86,7 +88,9 @@ async def accept_order_(
     """Accept incoming order"""
     order = await get_own_order(order_id, organization)
     if order.status != OrderStatus.CREATED:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Order with status '{order.status}' can't be accepted")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"Order with status '{order.status}' can't be accepted"
+        )
     order = await update_order_status(order, OrderStatus.CONTRACT_FORMATION)
     return proscribe_role_and_chat_credentials(order, ROLE)
 
@@ -100,13 +104,17 @@ async def set_cost_(
     """Set cost for order"""
     order = await get_own_order(order_id, organization)
     if order.status not in (OrderStatus.CREATED, OrderStatus.REJECTED, OrderStatus.COST_NEGOTIATION):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't set cost for order with status '{order.status}'")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't set cost for order with status '{order.status}'"
+        )
     order = await update_order(order, ("cost", cost), OrderStatus.COST_NEGOTIATION)
     return proscribe_role_and_chat_credentials(order, ROLE)
 
 
 @router.get("/{order_id}/contract-template/")
-async def get_contract_template_(order_id: int, organization: Organization = Depends(get_current_verified_organization)):
+async def get_contract_template_(
+    order_id: int, organization: Organization = Depends(get_current_verified_organization)
+):
     order = await get_own_order(order_id, organization)
     download_link = await get_contract_template("Москва", order)
     return {"downloadLink": download_link}
@@ -122,11 +130,13 @@ async def upload_contract_draft_(
     """Upload contract draft"""
     order = await get_own_order(order_id, organization)
     if order.status not in (OrderStatus.CONTRACT_FORMATION, OrderStatus.CONTRACT_NEGOTIATION):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't upload contract draft for order with status '{order.status}'")
-    
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't upload contract draft for order with status '{order.status}'",
+        )
+
     file = await create_uploaded_file(
-        contract_draft, OrderContractDraft, current_user,
-        allowed_types=["application", "text"], host=order
+        contract_draft, OrderContractDraft, current_user, allowed_types=["application", "text"], host=order
     )
     return file
 
@@ -139,7 +149,10 @@ async def confirm_contract_draft_(
     """Confirm contract draft for order"""
     order = await get_own_order(order_id, organization)
     if order.status != OrderStatus.CONTRACT_FORMATION:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't confirm contract draft for order with status '{order.status}'")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't confirm contract draft for order with status '{order.status}'",
+        )
     order = await confirm_contract_draft(order)
     return proscribe_role_and_chat_credentials(order, ROLE)
 
@@ -175,7 +188,10 @@ async def accept_last_contract_draft_(
     """Accept last contract draft for order"""
     order = await get_own_order(order_id, organization)
     if order.status != OrderStatus.CONTRACT_NEGOTIATION:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't accept contract draft for order with status '{order.status}'")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't accept contract draft for order with status '{order.status}'",
+        )
     await accept_last_contract_draft(order, "owner")
     return proscribe_role_and_chat_credentials(order, ROLE)
 
@@ -191,14 +207,16 @@ async def upload_e_sign_(
     order = await get_own_order(order_id, organization)
     contract = await order.contract
     if order.status != OrderStatus.CONTRACT_SIGNING:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't upload e-sign for order with status '{order.status}'")
-    
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't upload e-sign for order with status '{order.status}'",
+        )
+
     if not await verify_e_signature(e_sign_data, order, "owner"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="E-sign is not valid")
-    
+
     e_sign = await create_uploaded_file(
-        e_sign_data, OrderContractSignatureOwner, current_user,
-        allowed_types=["application", "text"], host=contract
+        e_sign_data, OrderContractSignatureOwner, current_user, allowed_types=["application", "text"], host=contract
     )
     e_sign.verified = True
     await e_sign.save()
@@ -217,7 +235,10 @@ async def set_signed_offline_(
     """Sign contract offline"""
     order = await get_own_order(order_id, organization)
     if order.status != OrderStatus.CONTRACT_SIGNING:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't sign contract offline for order with status '{order.status}'")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't sign contract offline for order with status '{order.status}'",
+        )
     order = await update_order(order, ("signed_offline_by_owner", True))
 
     if order.signed_offline_by_renter:
@@ -235,6 +256,9 @@ async def set_payment_type_(
     """Set payment type for order"""
     order = await get_own_order(order_id, organization)
     if order.status != OrderStatus.CHOOSING_PAYMENT_METHOD:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't set payment type for order with status '{order.status}'")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't set payment type for order with status '{order.status}'",
+        )
     order = await update_order(order, ("payment_type", payment_type), OrderStatus.WAITING_FOR_PAYMENT)
     return proscribe_role_and_chat_credentials(order, ROLE)

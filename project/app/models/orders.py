@@ -1,6 +1,5 @@
-import hashlib
 from enum import Enum
-from functools import total_ordering, lru_cache
+from functools import lru_cache, total_ordering
 
 from tortoise import fields, models
 
@@ -77,13 +76,11 @@ class OrderStatus(str, Enum):
     @lru_cache()
     def __order_dict(cls):
         return {val: key for key, val in enumerate(cls)}
-    
 
     def __gt__(self, other):
         if self.__class__ is other.__class__:
             return self.__order_dict[self] > self.__order_dict[other]
         return NotImplemented
-    
 
     def __add__(self, other):
         if isinstance(other, int):
@@ -134,15 +131,15 @@ class Order(models.Model):
             cost = price * n_days / 365
 
         return round(cost, 2)
-    
+
     # TODO
     def waiting_for_renter_action(self) -> bool:
         return NotImplemented
-    
+
     # TODO
     def waiting_for_owner_action(self) -> bool:
         return NotImplemented
-    
+
     class PydanticMeta:
         backward_relations = False
         # computed = ["waiting_for_renter_action", "waiting_for_owner_action"]

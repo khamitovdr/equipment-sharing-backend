@@ -5,12 +5,18 @@ from typing import Any
 from fastapi import HTTPException, status
 
 from app.models.equipment import Equipment
-from app.models.orders import Order, OrderStatus, OrderContractDraft, PaymentType, OrderPayment
+from app.models.orders import (
+    Order,
+    OrderContractDraft,
+    OrderPayment,
+    OrderStatus,
+    PaymentType,
+)
 from app.models.organizations import Organization
 from app.models.users import User
 from app.schemas.orders import OrderCreateSchema, OrderUpdateSchema
-from app.services.payments import check_payment_succeed
 from app.services.orders import create_chatengine_users
+from app.services.payments import check_payment_succeed
 
 log = logging.getLogger("uvicorn")
 
@@ -183,19 +189,19 @@ async def create_payment(order: Order, payment_id: str, payment_status: str) -> 
 async def confirm_payment_by_id(payment_id: int, payment_details: dict) -> Order:
     if not check_payment_succeed(payment_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Payment not succeed")
-    
+
     payment = await OrderPayment.get_or_none(id=payment_id)
     if payment is None:
         raise ValueError(f"Payment with id={payment_id} not found")
-    
+
     order = await Order.get_or_none(id=payment.corresponding_order_id)
     if order is None:
         raise ValueError(f"Order with id={payment.corresponding_order_id} not found")
-    
+
     assert order.status == OrderStatus.WAITING_FOR_PAYMENT
     assert order.payment_type == PaymentType.VIA_PLATFORM
     assert order.cost == float(payment_details["object"]["amount"]["value"])
-    
+
     payment.order = order
     payment.events.append(payment_details)
     payment.status = payment_details["object"]["status"]

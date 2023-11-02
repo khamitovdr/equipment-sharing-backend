@@ -1,16 +1,16 @@
-import aiohttp
-import re
 import hashlib
+import re
 
+import aiohttp
 from fastapi import UploadFile
 
-from app.models.orders import Order
 from app.config import get_settings
+from app.models.orders import Order
 
 
 def get_user_secret(order_id: int, role: str) -> str:
-    assert role in ['owner', 'renter']
-    return hashlib.sha1(f"{order_id}_{role}".encode('utf-8')).hexdigest()
+    assert role in ["owner", "renter"]
+    return hashlib.sha1(f"{order_id}_{role}".encode("utf-8")).hexdigest()
 
 
 def proscribe_role_and_chat_credentials(order: Order, role: str) -> Order:
@@ -27,11 +27,11 @@ def proscribe_role_and_chat_credentials(order: Order, role: str) -> Order:
 
 
 async def verify_e_signature(e_sign_data: UploadFile, order: Order, role: str) -> bool:
-    assert role in ['owner', 'renter']
-    
-    e_sign_template = re.compile(r'-+BEGIN CMS-+.+-+END CMS-+', re.MULTILINE | re.DOTALL)
+    assert role in ["owner", "renter"]
+
+    e_sign_template = re.compile(r"-+BEGIN CMS-+.+-+END CMS-+", re.MULTILINE | re.DOTALL)
     e_sign_data_content = await e_sign_data.read()
-    e_sign_data_content = e_sign_data_content.decode('utf-8')
+    e_sign_data_content = e_sign_data_content.decode("utf-8")
 
     if not e_sign_template.match(e_sign_data_content):
         return False
@@ -39,7 +39,6 @@ async def verify_e_signature(e_sign_data: UploadFile, order: Order, role: str) -
 
 
 async def create_chatengine_users(order: Order) -> None:
-
     renter = await order.requester
     organization = await order.equipment.organization
 
@@ -56,12 +55,14 @@ async def create_chatengine_users(order: Order) -> None:
             "username": f"order-{order.id}_owner",
             "secret": get_user_secret(order.id, "owner"),
             "email": organization.contact_email,
-            "first_name": organization.contact_employee_name if organization.contact_employee_name else "Представитель компании",
+            "first_name": organization.contact_employee_name
+            if organization.contact_employee_name
+            else "Представитель компании",
             "last_name": organization.contact_employee_surname,
         },
     }
     headers = {
-    'PRIVATE-KEY': get_settings().chat_engine_secret_key,
+        "PRIVATE-KEY": get_settings().chat_engine_secret_key,
     }
 
     async with aiohttp.ClientSession() as session:

@@ -3,12 +3,15 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 
-from app.models.users import User
+from app.crud.requisites import _update_requisites
 from app.models.organizations import Organization
 from app.models.requisites import Requisites
+from app.models.users import User
+from app.schemas.organizations import (
+    OrganizationContactsUpdateSchema,
+    OrganizationCreateSchema,
+)
 from app.schemas.requisites import RequisitesUpdateSchema
-from app.schemas.organizations import OrganizationCreateSchema, OrganizationContactsUpdateSchema
-from app.crud.requisites import _update_requisites
 from app.services.auth import get_current_active_user
 from app.services.organizations import extract_organization_data_from_dadata_response
 
@@ -67,7 +70,9 @@ async def get_current_verified_organization(
     return organization
 
 
-async def update_organization_requisites(organization: Organization, requisites_schema: RequisitesUpdateSchema) -> Requisites:
+async def update_organization_requisites(
+    organization: Organization, requisites_schema: RequisitesUpdateSchema
+) -> Requisites:
     log.info(f"Adding requisites to organization with inn {organization.inn} in DB...")
     requisites = await organization.requisites
     if requisites is None:
@@ -76,7 +81,9 @@ async def update_organization_requisites(organization: Organization, requisites_
     return await _update_requisites(requisites, requisites_schema)
 
 
-async def update_organization_contacts(organization: Organization, contacts_schema: OrganizationContactsUpdateSchema) -> Organization:
+async def update_organization_contacts(
+    organization: Organization, contacts_schema: OrganizationContactsUpdateSchema
+) -> Organization:
     log.info(f"Updating contacts of organization with inn {organization.inn} in DB...")
     if await organization.users.filter(is_verified_organization_member=True).count() > 0:
         raise HTTPException(

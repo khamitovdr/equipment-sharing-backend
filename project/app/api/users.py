@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.crud.organizations import get_organization_by_inn
 from app.crud.users import (
     create_user,
     get_user_by_email,
@@ -12,15 +13,14 @@ from app.crud.users import (
     update_user_requisites,
     verify_user_organization,
 )
-from app.crud.organizations import get_organization_by_inn
 from app.models.users import User
+from app.schemas.requisites import RequisitesSchema, RequisitesUpdateSchema
 from app.schemas.users import (
     UserCreateSchema,
     UserListSchema,
     UserSchema,
     UserUpdateSchema,
 )
-from app.schemas.requisites import RequisitesSchema, RequisitesUpdateSchema
 from app.services.auth import (
     CREDENTIALS_EXCEPTION,
     authenticate_user,

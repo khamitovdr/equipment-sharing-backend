@@ -7,13 +7,13 @@ from tortoise import Tortoise
 
 from app.api.users import create_new_user
 from app.config import Settings, get_settings
-from app.crud.organizations import create_organization
 from app.crud.equipment import create_equipment_category
+from app.crud.organizations import create_organization
 from app.db import MODELS
 from app.main import create_application
+from app.models.equipment import Equipment, EquipmentCategory
 from app.models.organizations import Organization
 from app.models.users import User
-from app.models.equipment import Equipment, EquipmentCategory
 from app.schemas.organizations import DadataResponseSchema
 from app.schemas.users import UserCreateSchema
 

@@ -1,35 +1,39 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 
 from app.crud.equipment import get_equipment_by_id
+from app.crud.files import create_uploaded_file
 from app.crud.orders import (
-    update_order_status,
+    accept_last_contract_draft,
     create_order,
+    create_payment,
+    get_contract_drafts,
     get_order_by_id,
     get_user_orders,
-    update_order_details,
     update_order,
-    get_contract_drafts,
-    accept_last_contract_draft,
-    create_payment,
+    update_order_details,
+    update_order_status,
 )
-from app.crud.files import create_uploaded_file
 from app.models.equipment import EquipmentStatus
-from app.models.orders import OrderStatus, Order, OrderContractDraft, OrderContractSignatureRenter
+from app.models.orders import (
+    Order,
+    OrderContractDraft,
+    OrderContractSignatureRenter,
+    OrderStatus,
+)
 from app.models.users import User
+from app.schemas.files import FileBaseSchema
 from app.schemas.orders import (
+    OrderContractDraftSchema,
     OrderCreateSchema,
     OrderListSchema,
     OrderSchema,
     OrderUpdateSchema,
-    OrderContractDraftSchema,
 )
-from app.schemas.files import FileBaseSchema
 from app.services.auth import get_current_active_user
+from app.services.orders import proscribe_role_and_chat_credentials, verify_e_signature
 from app.services.payments import create_payment_link
-from app.services.orders import verify_e_signature, proscribe_role_and_chat_credentials
-
 
 ROLE = "renter"
 
@@ -43,10 +47,15 @@ async def get_own_order(order_id: int, current_user: User) -> Order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
     if order.requester == current_user:
         return order
-    
+
     user_organization = await current_user.organization
     requester_organization = await order.requester.organization
-    if user_organization and requester_organization and current_user.is_verified_organization_member and user_organization == requester_organization:
+    if (
+        user_organization
+        and requester_organization
+        and current_user.is_verified_organization_member
+        and user_organization == requester_organization
+    ):
         return order
 
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
@@ -76,7 +85,6 @@ async def get_outgoing_orders_(
     return await get_user_orders(current_user, offset=offset, limit=limit)
 
 
-
 @router.post("/", response_model=OrderSchema)
 async def create_order_(create_schema: OrderCreateSchema, current_user: User = Depends(get_current_active_user)):
     """Create outgoing order for equipment"""
@@ -104,7 +112,9 @@ async def update_order_(
     """Update outgoing order details (start_date and end_date for now)"""
     order = await get_own_order(order_id, current_user)
     if order.status > OrderStatus.CREATED:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Order with status '{order.status}' can't be updated")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"Order with status '{order.status}' can't be updated"
+        )
     order = await update_order_details(order, update_schema)
     return proscribe_role_and_chat_credentials(order, ROLE)
 
@@ -114,7 +124,9 @@ async def cancel_order_(order_id: int, current_user: User = Depends(get_current_
     """Cancel outgoing order"""
     order = await get_own_order(order_id, current_user)
     if order.status > OrderStatus.CONTRACT_SIGNING:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Order with status '{order.status}' can't be canceled")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"Order with status '{order.status}' can't be canceled"
+        )
     order = await update_order_status(order, OrderStatus.CANCELED)
     return proscribe_role_and_chat_credentials(order, ROLE)
 
@@ -137,7 +149,7 @@ async def repeat_order_(order_id: int, current_user: User = Depends(get_current_
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order is not canceled")
     order = await create_order_(
         OrderCreateSchema(equipment_id=order.equipment.id, start_date=order.start_date, end_date=order.end_date),
-        current_user
+        current_user,
     )
     return proscribe_role_and_chat_credentials(order, ROLE)
 
@@ -151,11 +163,13 @@ async def upload_contract_draft_(
     """Upload contract draft"""
     order = await get_own_order(order_id, current_user)
     if order.status != OrderStatus.CONTRACT_NEGOTIATION:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't upload contract draft for order with status '{order.status}'")
-    
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't upload contract draft for order with status '{order.status}'",
+        )
+
     file = await create_uploaded_file(
-        contract_draft, OrderContractDraft, current_user,
-        allowed_types=["application", "text"], host=order
+        contract_draft, OrderContractDraft, current_user, allowed_types=["application", "text"], host=order
     )
     return file
 
@@ -191,7 +205,10 @@ async def accept_last_contract_draft_(
     """Accept last contract draft for order"""
     order = await get_own_order(order_id, current_user)
     if order.status != OrderStatus.CONTRACT_NEGOTIATION:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't accept contract draft for order with status '{order.status}'")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't accept contract draft for order with status '{order.status}'",
+        )
     await accept_last_contract_draft(order, "renter")
     return proscribe_role_and_chat_credentials(order, ROLE)
 
@@ -206,14 +223,16 @@ async def upload_e_sign_(
     order = await get_own_order(order_id, current_user)
     contract = await order.contract
     if order.status != OrderStatus.CONTRACT_SIGNING:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't upload e-sign for order with status '{order.status}'")
-    
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't upload e-sign for order with status '{order.status}'",
+        )
+
     if not await verify_e_signature(e_sign_data, order, "renter"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="E-sign is not valid")
-    
+
     e_sign = await create_uploaded_file(
-        e_sign_data, OrderContractSignatureRenter, current_user,
-        allowed_types=["application", "text"], host=contract
+        e_sign_data, OrderContractSignatureRenter, current_user, allowed_types=["application", "text"], host=contract
     )
     e_sign.verified = True
     await e_sign.save()
@@ -232,7 +251,10 @@ async def set_signed_offline_(
     """Sign contract offline"""
     order = await get_own_order(order_id, current_user)
     if order.status != OrderStatus.CONTRACT_SIGNING:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You can't sign contract offline for order with status '{order.status}'")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't sign contract offline for order with status '{order.status}'",
+        )
     order = await update_order(order, ("signed_offline_by_renter", True))
 
     if order.signed_offline_by_owner:
@@ -248,6 +270,8 @@ async def get_payment_link_(order_id: int, return_url: str, current_user: User =
     if order.status != OrderStatus.WAITING_FOR_PAYMENT:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Order is not waiting for payment")
 
-    payment_id, payment_status, payment_link = create_payment_link(order.cost, f"Оплата заказа №{order.id}", return_url)
-    payment = await create_payment(order, payment_id, payment_status)
+    payment_id, payment_status, payment_link = create_payment_link(
+        order.cost, f"Оплата заказа №{order.id}", return_url
+    )
+    await create_payment(order, payment_id, payment_status)
     return {"paymentLink": payment_link}

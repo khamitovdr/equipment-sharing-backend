@@ -2,10 +2,6 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 
-from app.crud.organizations import (
-    get_current_organization,
-    get_current_verified_organization,
-)
 from app.crud.equipment import (
     create_equipment,
     create_equipment_category,
@@ -18,6 +14,10 @@ from app.crud.equipment import (
     update_equipment_status,
 )
 from app.crud.files import create_uploaded_file, delete_file
+from app.crud.organizations import (
+    get_current_organization,
+    get_current_verified_organization,
+)
 from app.models.equipment import (
     EquipmentDocument,
     EquipmentMedia,

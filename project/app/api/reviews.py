@@ -3,9 +3,14 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.crud.orders import get_order_by_id
-from app.crud.reviews import compute_csi, compute_nps, create_nps_csi_feedback, create_or_update_review
+from app.crud.reviews import (
+    compute_csi,
+    compute_nps,
+    create_nps_csi_feedback,
+    create_or_update_review,
+)
 from app.models.users import User
-from app.schemas.reviews import ReviewCreateSchema, FeedbackCreateSchema, ReviewSchema
+from app.schemas.reviews import FeedbackCreateSchema, ReviewCreateSchema, ReviewSchema
 from app.services.auth import get_current_active_user
 
 log = logging.getLogger("uvicorn")
@@ -21,14 +26,14 @@ async def create_owner_review(
     order = await get_order_by_id(order_id)
     if order is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-    
+
     if user == order.requester:
         review = await create_or_update_review(order, user, review, "renter")
     elif await user.organization == await order.equipment.organization:
         review = await create_or_update_review(order, user, review, "owner")
     else:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to create review")
-    
+
     return review
 
 

@@ -23,7 +23,6 @@ class FileBaseModel(models.Model):
 
 
 class UploadedFileBaseModel(FileBaseModel):
-    
     class Meta:
         abstract = True
 

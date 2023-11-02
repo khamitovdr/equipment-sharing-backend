@@ -4,13 +4,17 @@ import logging
 import os
 from typing import Type
 
-from fastapi import UploadFile, HTTPException, status
-from tortoise import models
+from fastapi import HTTPException, UploadFile, status
 from PIL import Image
+from tortoise import models
 
 from app.config import get_settings
+from app.models.files import (
+    FileBaseModel,
+    UploadedFileBaseModel,
+    UploadedMediaBaseModel,
+)
 from app.models.users import User
-from app.models.files import FileBaseModel, UploadedFileBaseModel, UploadedMediaBaseModel
 
 UPLOAD_DIR = get_settings().static_dir
 
@@ -18,13 +22,13 @@ log = logging.getLogger("uvicorn")
 
 
 async def create_uploaded_file(
-        file: UploadFile,
-        cls: Type[UploadedFileBaseModel],
-        user: User,
-        allowed_types: list[str] = None,
-        allowed_formats: list[str] = None,
-        host: models.Model = None,
-    ) -> UploadedFileBaseModel:
+    file: UploadFile,
+    cls: Type[UploadedFileBaseModel],
+    user: User,
+    allowed_types: list[str] = None,
+    allowed_formats: list[str] = None,
+    host: models.Model = None,
+) -> UploadedFileBaseModel:
     data = await file.read()
 
     media_type, media_format = file.content_type.split("/")
@@ -33,13 +37,13 @@ async def create_uploaded_file(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail=f"Unsupported media type: {media_type}! Allowed types: {allowed_types}",
         )
-    
+
     if allowed_formats and media_format not in allowed_formats:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail=f"Unsupported media format: {media_format}! Allowed formats: {allowed_formats}",
         )
-    
+
     hash = hashlib.sha1(data).hexdigest()
     ext = os.path.splitext(file.filename)[-1].strip(".")
 
@@ -51,14 +55,14 @@ async def create_uploaded_file(
     }
 
     file_record = await cls(
-            name=file.filename,
-            media_type=media_type,
-            media_format=media_format,
-            hash=hash,
-            path=get_save_path(),
-            added_by=user,
-        )
-    
+        name=file.filename,
+        media_type=media_type,
+        media_format=media_format,
+        hash=hash,
+        path=get_save_path(),
+        added_by=user,
+    )
+
     if host:
         file_record.host = host
 
@@ -99,11 +103,13 @@ async def create_uploaded_file(
 
     except Exception as e:
         log.error(f"Error while creating file {file.filename}: {e}")
-        if os.path.exists(file_record.path): os.remove(file_record.path)
+        if os.path.exists(file_record.path):
+            os.remove(file_record.path)
 
         if cls == UploadedMediaBaseModel and file_record.derived_path:
             for path in file_record.derived_path.values():
-                if os.path.exists(path): os.remove(path)
+                if os.path.exists(path):
+                    os.remove(path)
         raise e
 
 

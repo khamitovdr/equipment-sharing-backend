@@ -1,20 +1,20 @@
 import logging
 
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-import sentry_sdk
 
 from app import scheduler
 from app.api import (
     equipment,
     notifications,
+    order_process_owner,
+    order_process_renter,
     organizations,
+    payments,
     reviews,
     token,
     users,
-    order_process_renter,
-    order_process_owner,
-    payments,
 )
 from app.config import get_settings
 from app.db import init_db
@@ -32,8 +32,9 @@ sentry_sdk.init(
     # of sampled transactions.
     # We recommend adjusting this value in production.
     profiles_sample_rate=1.0,
-    send_default_pii=True # send user data (id, email, ip, etc.)
+    send_default_pii=True,  # send user data (id, email, ip, etc.)
 )
+
 
 def create_application() -> FastAPI:
     application = FastAPI(title="Equipment sharing service")

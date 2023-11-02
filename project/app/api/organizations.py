@@ -3,11 +3,21 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.crud.organizations import get_organization_by_inn, update_organization_requisites, get_current_verified_organization, get_or_create_organization, update_organization_contacts, update_organization_contacts_by_member
+from app.crud.organizations import (
+    get_current_verified_organization,
+    get_or_create_organization,
+    get_organization_by_inn,
+    update_organization_contacts,
+    update_organization_contacts_by_member,
+    update_organization_requisites,
+)
 from app.models.organizations import Organization
 from app.models.users import User
-from app.schemas.organizations import OrganizationSchema, OrganizationContactsUpdateSchema
-from app.schemas.requisites import RequisitesUpdateSchema, RequisitesSchema
+from app.schemas.organizations import (
+    OrganizationContactsUpdateSchema,
+    OrganizationSchema,
+)
+from app.schemas.requisites import RequisitesSchema, RequisitesUpdateSchema
 from app.services.auth import get_current_active_user
 
 log = logging.getLogger("uvicorn")
