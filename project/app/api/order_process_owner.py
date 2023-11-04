@@ -262,3 +262,35 @@ async def set_payment_type_(
         )
     order = await update_order(order, ("payment_type", payment_type), OrderStatus.WAITING_FOR_PAYMENT)
     return proscribe_role_and_chat_credentials(order, ROLE)
+
+
+@router.put("/{order_id}/accept-payment/", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
+async def accept_payment_(
+    order_id: int,
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Accept payment for order"""
+    order = await get_own_order(order_id, organization)
+    if order.status != OrderStatus.WAITING_FOR_PAYMENT or order.payment_type != PaymentType.BY_CASH:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't accept payment for order if it's not waiting for payment or payment type is not 'by cash'",
+        )
+    order = await update_order(order, ("is_paid", True), OrderStatus.ACCEPTANCE_BY_RENTER)
+    return proscribe_role_and_chat_credentials(order, ROLE)
+
+
+@router.put("/{order_id}/accept-equipment/", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
+async def accept_equipment_(
+    order_id: int,
+    organization: Organization = Depends(get_current_verified_organization),
+):
+    """Accept equipment for order"""
+    order = await get_own_order(order_id, organization)
+    if order.status != OrderStatus.ACCEPTANCE_BY_OWNER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't accept equipment for order with status '{order.status}'",
+        )
+    order = await update_order_status(order, OrderStatus.WAITING_FOR_REVIEW)
+    return proscribe_role_and_chat_credentials(order, ROLE)

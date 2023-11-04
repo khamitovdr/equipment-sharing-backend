@@ -11,6 +11,10 @@ from app.models.orders import (
     OrderPayment,
     OrderStatus,
     PaymentType,
+    OrderContract,
+    OrderContractSignature,
+    OrderContractSignatureRenter,
+    OrderContractSignatureOwner,
 )
 from app.models.organizations import Organization
 from app.models.users import User
@@ -156,6 +160,19 @@ async def confirm_contract_draft(order: Order) -> Order:
     return await update_order_status(order, OrderStatus.CONTRACT_NEGOTIATION)
 
 
+async def create_contract(order: Order, contract_draft: OrderContractDraft) -> OrderContract:
+    contract = await OrderContract.create(
+        host=order,
+        name=contract_draft.name,
+        media_type=contract_draft.media_type,
+        media_format=contract_draft.media_format,
+        hash=contract_draft.hash,
+        path=contract_draft.path,
+        added_by=contract_draft.added_by,
+    )
+    return contract
+
+
 async def accept_last_contract_draft(order: Order, role: str) -> OrderContractDraft:
     contract_draft = await get_contract_drafts(order, only_last=True)
     if contract_draft is None:
@@ -171,6 +188,7 @@ async def accept_last_contract_draft(order: Order, role: str) -> OrderContractDr
     await contract_draft.save(update_fields=update_fields)
 
     if contract_draft.accepted_by_owner and contract_draft.accepted_by_renter:
+        await create_contract(order, contract_draft)
         await update_order_status(order, OrderStatus.CONTRACT_SIGNING)
 
     return contract_draft

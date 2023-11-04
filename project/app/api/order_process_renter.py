@@ -275,3 +275,19 @@ async def get_payment_link_(order_id: int, return_url: str, current_user: User =
     )
     await create_payment(order, payment_id, payment_status)
     return {"paymentLink": payment_link}
+
+
+@router.put("/{order_id}/accept-equipment/", response_model=OrderSchema, status_code=status.HTTP_202_ACCEPTED)
+async def accept_equipment_(
+    order_id: int,
+    current_user: User = Depends(get_current_active_user),
+):
+    """Accept equipment"""
+    order = await get_own_order(order_id, current_user)
+    if order.status != OrderStatus.ACCEPTANCE_BY_RENTER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You can't accept equipment for order with status '{order.status}'",
+        )
+    order = await update_order_status(order, OrderStatus.WAITING_FOR_RENT)
+    return proscribe_role_and_chat_credentials(order, ROLE)
