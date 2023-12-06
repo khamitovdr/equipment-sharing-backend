@@ -47,18 +47,16 @@ async def create_chatengine_users(order: Order) -> None:
         "renter": {
             "username": f"order-{order.id}_renter",
             "secret": get_user_secret(order.id, "renter"),
-            "email": renter.email,
-            "first_name": renter.name,
-            "last_name": renter.surname,
+            "email": renter.email or "",
+            "first_name": renter.name or "",
+            "last_name": renter.surname or "",
         },
         "owner": {
             "username": f"order-{order.id}_owner",
             "secret": get_user_secret(order.id, "owner"),
-            "email": organization.contact_email,
-            "first_name": organization.contact_employee_name
-            if organization.contact_employee_name
-            else "Представитель компании",
-            "last_name": organization.contact_employee_surname,
+            "email": organization.contact_email or "",
+            "first_name": organization.contact_employee_name or "Представитель компании",
+            "last_name": organization.contact_employee_surname or "",
         },
     }
     headers = {
@@ -70,3 +68,43 @@ async def create_chatengine_users(order: Order) -> None:
             async with session.post(chat_engine_url, json=user, headers=headers) as res:
                 user = await res.json()
                 print(user)
+
+
+async def get_or_create_chat(order: Order) -> str:
+    url = "https://api.chatengine.io/chats/"
+    
+    headers = {
+      'Project-ID': get_settings().chat_engine_project_id,
+      'User-Name': f"order-{order.id}_owner",
+      'User-Secret': get_user_secret(order.id, "owner"),
+    }
+    payload = {
+        "usernames": [f"order-{order.id}_renter"],
+        "title": f"Заказ №{order.id}",
+        "is_direct_chat": True,
+    }
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.put(url, json=payload, headers=headers) as res:
+            chat = await res.json()
+            print(chat)
+
+    return chat['id']
+
+
+async def delete_all_chatengine_users():
+    users_url = "https://api.chatengine.io/users/"
+
+    headers = {
+      'PRIVATE-KEY': get_settings().chat_engine_secret_key,
+    }
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.get(users_url, headers=headers) as res:
+            users = await res.json()
+
+
+        for user in users:
+            user_url = f"https://api.chatengine.io/users/{user['id']}/"
+            async with session.delete(user_url, headers=headers) as res:
+                print(f"Deleting user {user['username']}:", res.status)
