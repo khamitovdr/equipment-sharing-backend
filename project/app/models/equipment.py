@@ -66,23 +66,32 @@ class EquipmentDocument(UploadedFileBaseModel):
 
 class Equipment(models.Model):
     name = fields.CharField(max_length=255)
-    description = fields.TextField(null=True)
-    description_of_configuration = fields.TextField(null=True)
-    with_operator = fields.BooleanField(default=False)
+    category = fields.ForeignKeyField("models.EquipmentCategory", related_name="equipment", on_delete=fields.CASCADE)
     price = fields.FloatField()
     time_interval = fields.CharEnumField(TimeInterval, default=TimeInterval.DAY)
+    description = fields.TextField(null=True)
+    description_of_configuration = fields.TextField(null=True)
+    year_of_release = fields.IntField(default=1900)
     # quantity = fields.IntField(default=1)
     # avatar = fields.ForeignKeyField(
     #     "models.EquipmentMedia",
     #     null=True
     # ) # tortoise.exceptions.ConfigurationError: Can't create schema due to cyclic fk references
+
+    status = fields.CharEnumField(EquipmentStatus, default=EquipmentStatus.HIDDEN)
+
     organization = fields.ForeignKeyField("models.Organization", related_name="equipment", on_delete=fields.CASCADE)
     added_by = fields.ForeignKeyField("models.User", related_name="equipment", on_delete=fields.SET_NULL, null=True)
-    category = fields.ForeignKeyField("models.EquipmentCategory", related_name="equipment", on_delete=fields.CASCADE)
-    status = fields.CharEnumField(EquipmentStatus, default=EquipmentStatus.HIDDEN)
-    year_of_release = fields.IntField(default=1900)
+
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
+
+    # Features
+    with_operator = fields.BooleanField(default=False)
+    on_owner_site = fields.BooleanField(default=False)
+    delivery = fields.BooleanField(default=False)
+    installation = fields.BooleanField(default=False)
+    setup = fields.BooleanField(default=False)
 
     documents: fields.ReverseRelation["EquipmentDocument"]
     photo_and_video: fields.ReverseRelation["EquipmentMedia"]
