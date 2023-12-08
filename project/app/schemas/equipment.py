@@ -12,13 +12,18 @@ from app.models.equipment import (
 
 class EquipmentCreateSchema(BaseModel):
     name: str
-    description: str = None
-    description_of_configuration: str = None
-    with_operator: bool = False
+    category_id: int
     price: float
     time_interval: TimeInterval = TimeInterval.DAY
-    category_id: int
+    description: str = None
+    description_of_configuration: str = None
     year_of_release: int = 1900
+
+    with_operator: bool = False
+    on_owner_site: bool = False
+    delivery: bool = False
+    installation: bool = False
+    setup: bool = False
 
     documents_ids: list[int] = []
     photo_and_video_ids: list[int] = []
