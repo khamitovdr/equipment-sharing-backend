@@ -21,6 +21,7 @@ class EquipmentStatusUpdate(str, Enum):
 
 
 class TimeInterval(str, Enum):
+    HOUR = "hour"
     DAY = "day"
     WEEK = "week"
     MONTH = "month"
