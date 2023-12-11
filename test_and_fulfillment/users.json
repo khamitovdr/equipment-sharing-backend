@@ -1,0 +1,28 @@
+{
+  "John": {
+    "name": "John",
+    "middle_name": "Johnovich",
+    "surname": "Doe",
+    "email": "johndoe@example.com",
+    "phone": "+79999999999",
+    "password": "SecretPassword123",
+    "organization_inn": "7721581040",
+    "is_owner": true
+  },
+  "Alice": {
+    "name": "Alice",
+    "surname": "Wonderson",
+    "email": "alice@example.com",
+    "phone": "+79888888888",
+    "password": "AlicePassword123",
+    "organization_inn": "7720876531",
+    "is_owner": true
+  },
+  "Bob": {
+    "name": "Bob",
+    "surname": "Odenkirk",
+    "email": "bob@example.com",
+    "phone": "+79666666666",
+    "password": "BobPassword123"
+  }
+}
