@@ -3,10 +3,10 @@ from tortoise import fields, models
 
 class Organization(models.Model):
     inn = fields.CharField(max_length=63, pk=True)
-    short_name = fields.CharField(max_length=255, unique=True, null=True)
-    full_name = fields.CharField(max_length=255, unique=True, null=True)
-    ogrn = fields.CharField(max_length=63, unique=True, null=True)
-    kpp = fields.CharField(max_length=63, unique=True, null=True)
+    short_name = fields.CharField(max_length=255, null=True)
+    full_name = fields.CharField(max_length=255, null=True)
+    ogrn = fields.CharField(max_length=63, null=True)
+    kpp = fields.CharField(max_length=63, null=True)
     registration_date = fields.DateField(null=True)
     authorized_capital_k_rubles = fields.DecimalField(max_digits=24, decimal_places=2, null=True)
     legal_address = fields.CharField(max_length=255, null=True)
