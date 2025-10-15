@@ -41,7 +41,7 @@ john._verify_my_organization()
 john.update_organization_requisites(john_organization["requisites"])
 
 
-# john.login(USERS[0]["email"], USERS[0]["password"])
+# john.login(USERS["John"]["email"], USERS["John"]["password"])
 
 for equipment in EQUIPMENT[john_organization_inn]:
     john.post_equipment(equipment)

@@ -55,7 +55,7 @@ class Client:
         self.AUTH_HEADERS = self.HEADERS
         self.FILE_UPLOAD_HEADERS = self.BASE_HEADERS
 
-    def login(self, username: str, password: str) -> str:
+    def login(self, username: str, password: str):
         credentials = {
             "username": username,
             "password": password,
@@ -65,7 +65,7 @@ class Client:
             headers=self.FORM_DATA_HEADERS,
             data=credentials,
         )
-        assert response.status_code == 200
+        assert response.status_code == 200, response.text
         token = response.json()["access_token"]
         self.AUTH_HEADERS = {
             **self.HEADERS,
@@ -80,13 +80,13 @@ class Client:
         self.AUTH_HEADERS = self.HEADERS
         self.FILE_UPLOAD_HEADERS = self.BASE_HEADERS
 
-    def create_user(self, user: dict) -> dict:
+    def create_user(self, user: dict):
         response = requests.post(
             url=f"{self.url}users/",
             headers=self.AUTH_HEADERS,
             json=user,
         )
-        assert response.status_code == 201
+        assert response.status_code == 201, response.text
         self.login(user["email"], user["password"])
 
     def get_user(self, user_id: int) -> dict:
@@ -94,7 +94,7 @@ class Client:
             url=f"{self.url}users/{user_id}/",
             headers=self.HEADERS,
         )
-        assert response.status_code == 200
+        assert response.status_code == 200, response.text
         return response.json()
     
     def get_self(self) -> dict:
@@ -102,7 +102,7 @@ class Client:
             url=f"{self.url}users/me/",
             headers=self.AUTH_HEADERS,
         )
-        assert response.status_code == 200
+        assert response.status_code == 200, response.text
         return response.json()
     
     def update_self(self, user: dict) -> dict:
@@ -111,7 +111,7 @@ class Client:
             headers=self.AUTH_HEADERS,
             json=user,
         )
-        assert response.status_code == 202
+        assert response.status_code == 202, response.text
         return response.json()
     
     def _add_organization_contacts(self, inn: str, contacts: dict) -> dict:
@@ -120,16 +120,16 @@ class Client:
             headers=self.HEADERS,
             json=contacts,
         )
-        assert response.status_code == 202
+        assert response.status_code == 202, response.text
         return response.json()
 
-    def create_organization(self, organization: dict, contacts: dict = None) -> dict:
+    def create_organization(self, organization: dict, contacts: dict | None = None) -> dict:
         response = requests.post(
             url=f"{self.url}organizations/",
             headers=self.HEADERS,
             json=organization,
         )
-        assert response.status_code == 200
+        assert response.status_code == 200, response.text
         response = response.json()
 
         if contacts is None:
@@ -144,7 +144,7 @@ class Client:
             headers=self.AUTH_HEADERS,
             json=requisites,
         )
-        assert response.status_code == 202
+        assert response.status_code == 202, response.text
         return response.json()
     
     def _verify_my_organization(self) -> dict:
@@ -153,7 +153,7 @@ class Client:
             url=f"{self.url}users/{me['id']}/verify/",
             headers=self.HEADERS,
         )
-        assert response.status_code == 202
+        assert response.status_code == 202, response.text
         return response.json()
 
     def post_equipment(self, equipment: dict) -> dict:
@@ -167,7 +167,7 @@ class Client:
                     files=files,
                     headers=self.FILE_UPLOAD_HEADERS,
                 )
-                assert response.status_code == 200
+                assert response.status_code == 200, response.text
                 documents_ids.append(response.json()["id"])
 
         photo_and_video_ids = []
@@ -179,7 +179,7 @@ class Client:
                     files=files,
                     headers=self.FILE_UPLOAD_HEADERS,
                 )
-                assert response.status_code == 200
+                assert response.status_code == 200, response.text
                 photo_and_video_ids.append(response.json()["id"])
 
         equipment["documents_ids"] = documents_ids
@@ -190,5 +190,5 @@ class Client:
             headers=self.AUTH_HEADERS,
             json=equipment,
         )
-        assert response.status_code == 200
+        assert response.status_code == 200, response.text
         return response.json()
