@@ -3,6 +3,7 @@ import logging
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.cors import CORSMiddleware
 
 from app import scheduler
 from app.api import (
@@ -50,6 +51,14 @@ def create_application() -> FastAPI:
 
     application.mount("/static", StaticFiles(directory=get_settings().static_dir), name="static")
 
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
     return application
 
 
