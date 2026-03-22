@@ -2,9 +2,9 @@ import json
 from test_and_fulfillment_client import Client
 
 
-# DOMAIN = "77.240.38.191"
+DOMAIN = "51.250.25.208"
 # DOMAIN = "10.0.0.7"
-DOMAIN = "localhost"
+# DOMAIN = "localhost"
 PORT = 8004
 
 
