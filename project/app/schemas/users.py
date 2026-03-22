@@ -39,7 +39,11 @@ class UserCreateSchema(BaseModel):
     @validator("organization_inn", always=True)
     def check_organization_inn(cls, v, values):
         if values.get("is_owner") and not v:
-            raise ValueError("Organization is required for owners")
+            raise ValueError("Organization INN is required for owners")
+        if v and not v.isdigit():
+            raise ValueError("Organization INN must contain only digits")
+        if v and len(v) not in (10, 12):
+            raise ValueError("Organization INN must contain 10 or 12 digits")
         return v
 
 

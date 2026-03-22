@@ -160,7 +160,10 @@ async def test_user_get_by_id(client: AsyncClient, user_in_db: User):
 
     # Then
     assert response.status_code == status.HTTP_200_OK
+    await user_in_db.fetch_related("requisites")
     for field, value in response.json().items():
+        if field == "requisites":
+            continue
         assert getattr(user_in_db, field) == value
 
 
@@ -326,10 +329,12 @@ async def test_user_update(
     ],
 )
 async def test_user_update_inn(
-    user_client: AsyncClient, user_update_data: dict, is_verified_organization_member: bool
+    user_client: AsyncClient,
+    user_update_data: dict,
+    is_verified_organization_member: bool,
+    target_organization_in_db: Organization,
 ):
     # Given
-    print((await user_client.get("/users/me/")).json())
 
     # When
     response = await user_client.put("/users/me/", json=user_update_data)

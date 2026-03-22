@@ -112,9 +112,18 @@ async def user_in_db() -> User:
     return user
 
 
+@pytest.fixture
+async def owner_organization_in_db() -> Organization:
+    """Organization matching TEST_OWNER_DATA['organization_inn'] so owner users get linked."""
+    organization = await create_organization(
+        OrganizationCreateSchema(inn=TEST_OWNER_DATA["organization_inn"])
+    )
+    return organization
+
+
 # TODO: merge with user_in_db fixture (use parametrization)
 @pytest.fixture
-async def not_verified_owner_in_db() -> User:
+async def not_verified_owner_in_db(owner_organization_in_db: Organization) -> User:
     user_schema = UserCreateSchema(**TEST_OWNER_DATA)
     user_schema.email = "not_verified_owner@test.com"
     user = await create_new_user(user_schema)
@@ -123,7 +132,7 @@ async def not_verified_owner_in_db() -> User:
 
 # TODO: merge with user_in_db fixture (use parametrization)
 @pytest.fixture
-async def verified_owner_in_db() -> User:
+async def verified_owner_in_db(owner_organization_in_db: Organization) -> User:
     user_schema = UserCreateSchema(**TEST_OWNER_DATA)
     user_schema.email = "verified_owner@test.com"
     user = await create_new_user(user_schema)
@@ -204,6 +213,13 @@ TEST_ORGANIZATION = OrganizationCreateSchema(
 @pytest.fixture
 async def organization_in_db() -> Organization:
     organization = await create_organization(TEST_ORGANIZATION)
+    return organization
+
+
+@pytest.fixture
+async def target_organization_in_db() -> Organization:
+    """Organization with INN '0987654321' used as the update target in INN update tests."""
+    organization = await create_organization(OrganizationCreateSchema(inn="0987654321"))
     return organization
 
 
