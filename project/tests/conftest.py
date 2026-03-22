@@ -14,7 +14,7 @@ from app.main import create_application
 from app.models.equipment import Equipment, EquipmentCategory
 from app.models.organizations import Organization
 from app.models.users import User
-from app.schemas.organizations import DadataResponseSchema
+from app.schemas.organizations import OrganizationCreateSchema
 from app.schemas.users import UserCreateSchema
 
 #####################
@@ -186,7 +186,7 @@ async def authorized_owner_client(verified_owner_in_db: User) -> AsyncClient:
 ##############################
 
 
-TEST_ORGANIZATION = DadataResponseSchema(
+TEST_ORGANIZATION = OrganizationCreateSchema(
     short_name="LLC Test Organization",
     full_name="Limited Liability Company Test Organization",
     ogrn="1234567890123",

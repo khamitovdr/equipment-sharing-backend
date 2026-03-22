@@ -1,0 +1,100 @@
+# Equipment Sharing Backend
+
+Equipment rental platform backend (FastAPI). Renters browse and order equipment; owners (organizations) list and manage it. Multi-step order flow with contracts, payments, and reviews.
+
+## Tech stack
+- Python 3.11, FastAPI 0.95, **Pydantic v1** (1.10.x), Tortoise ORM, asyncpg, PostgreSQL 14
+- Auth: JWT (python-jose) + bcrypt. Migrations: Aerich. Background tasks: Rocketry
+- External: Sentry, YooKassa (payments), Dadata (company lookup), ChatEngine
+- Formatting: black (line-length 119), isort (profile black), flake8
+
+## Project structure
+All app code lives inside `project/`. Root has `docker-compose.yml`, `.env`, and `test_and_fulfillment/`.
+
+```
+project/app/
+├── main.py           # App factory, startup/shutdown, router registration
+├── config.py         # Settings(BaseSettings) cached via get_settings()
+├── db.py             # MODELS list, TORTOISE_ORM config, init_db()
+├── scheduler.py      # Rocketry async scheduler
+├── _init_models.py   # Must be imported in schemas before pydantic_model_creator
+├── api/              # FastAPI routers — one file per domain
+├── crud/             # Thin async DB query functions (no business logic)
+├── models/           # Tortoise ORM models
+├── schemas/          # Pydantic v1 request/response schemas
+├── services/         # Business logic (auth, payments, documents, orders)
+├── db_signals/       # Tortoise signal handlers
+└── data/             # Seed data JSON (equipment categories, OKVEDs)
+```
+
+## Running
+```bash
+docker compose up -d --build              # Dev: app on :8004, Postgres on :54321
+docker compose down -v                    # Stop and remove volumes
+docker compose logs web                   # App logs (useful in detached mode)
+```
+
+## Commands reference
+All app commands (tests, migrations) run inside the `web` container:
+```bash
+# Tests
+docker compose exec web python -m pytest --disable-warnings
+docker compose exec web python -m pytest --disable-warnings --lf                          # last failed only
+docker compose exec web python -m pytest --disable-warnings --cov="." --cov-report html   # with coverage
+docker compose exec web python -m pytest --disable-warnings -o log_cli=true               # with logs
+
+# Migrations (Aerich)
+docker compose exec web aerich migrate     # generate migration from model changes
+docker compose exec web aerich upgrade     # apply migrations to DB
+
+# Database
+docker compose exec web-db psql -U postgres   # direct DB access (\c web_dev, \dt, \q)
+```
+
+Linting runs locally from the repo root:
+```bash
+python -m flake8 ./project/app/ --config ./project/setup.cfg
+python -m black ./project/app/ --config ./project/pyproject.toml
+python -m isort ./project
+```
+
+## Adding a new domain entity
+Follow this order (each layer depends on the previous):
+1. **Model** in `app/models/<domain>.py` — Tortoise Model class
+2. **Register** model path in `MODELS` list in `app/db.py`
+3. **Migration** — `docker compose exec web aerich migrate` + `aerich upgrade`
+4. **Schema** in `app/schemas/<domain>.py` — import `_init_models`, use `pydantic_model_creator`
+5. **CRUD** in `app/crud/<domain>.py` — thin async functions, only DB queries
+6. **Service** in `app/services/<domain>.py` — business logic (if needed)
+7. **Router** in `app/api/<domain>.py` — `APIRouter()`, then include in `main.py`
+8. **Tests** in `project/tests/`
+
+## Pydantic v1 — CRITICAL
+Do NOT use Pydantic v2 syntax:
+- `@validator` not `@field_validator`
+- `.dict()` not `.model_dump()`
+- `BaseSettings` from `pydantic`, not `pydantic_settings`
+- `schema_extra` not `json_schema_extra`
+
+## Key patterns
+- Auth via `Depends(get_current_active_user)` from `app/services/auth.py`
+- `pydantic_model_creator(Model, name="ModelSchema")` — `name` arg is required (Tortoise bug #647)
+- `_init_models.py` must be imported in schema files before `pydantic_model_creator`
+- ForeignKey refs use string format: `"models.ModelName"`
+- Enum fields: `CharEnumField` with `(str, Enum)` classes
+- Uploaded files: `static/<domain>/media/` or `static/<domain>/documents/`
+
+## Planned features (not active yet)
+These models exist but are commented out in `db.py` MODELS:
+- `app.models.payments` — YooKassa integration
+- `app.models.chats`, `app.models.messages` — ChatEngine integration
+
+Do not enable without explicit request.
+
+## Testing
+- pytest + httpx AsyncClient + anyio (asyncio backend)
+- `conftest.py` has autouse fixture that truncates all tables after each test
+- Key fixtures: `client`, `authorized_user_client`, `authorized_owner_client`, `user_in_db`, `verified_owner_in_db`, `organization_in_db`
+
+## Git workflow
+Direct commits to main. Use English for commit messages and code comments.
