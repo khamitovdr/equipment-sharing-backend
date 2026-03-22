@@ -230,11 +230,11 @@ async def test_user_update_unauthorized(client: AsyncClient, user_in_db: User):
         (
             {  # Update multiple fields
                 "email": "user_new@test.com",
-                "full_name": "Test User Jr.",
+                "name": "Test User Jr.",
                 "phone": "+79888888888",
             },
             status.HTTP_202_ACCEPTED,
-            ["email", "full_name", "phone"],
+            ["email", "name", "phone"],
         ),
         (
             {  # Update password

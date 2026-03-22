@@ -91,7 +91,8 @@ async def client_instant_token_expired(monkeypatch) -> AsyncClient:
 
 TEST_USER_DATA = {
     "email": "user@test.com",
-    "full_name": "Test User",
+    "name": "Test",
+    "surname": "User",
     "is_owner": False,
     "password": "SecretPassword123",
     "phone": "+79999999999",
